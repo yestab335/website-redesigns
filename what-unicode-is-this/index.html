@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Unicode character is this?</title>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css" type="text/css">
+    <!-- Favicon -->
+    <link rel="icon" href="img/Favicon.png" type="png file">
+  </head>
+  <body onload="InitialiseConversion()" onunload="FinaliseConversion()">
+    <h1>What Unicode character is this?</h1>
+    <table id="table3" border="0" width="100%" align="center">
+      <tr>
+        <td>
+          <p>Enter character or text to identify:</p>
+          <p>
+            <input id="edittextin" type="text" autofocus="autofocus" title="Enter character or string of characters to convert" />
+            <input id="convertbutton" type="button" value="Identify" title="Show the code points and character names for the specified characters" onclick="OnConvertCharactersToNames()" />
+          </p>
+          <p>
+            <textarea id="edittextout" cols="100" rows="24" class="small serif"></textarea>
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <hr />
+
+    <p>Supports all 149,186 named characters defined in <a target="_blank" href="https://www.unicode.org/versions/Unicode15.0.0/" title="Unicode 15.0.0">Unicode 15.0</a> (released September 2022). Pass through a string of Unicode characters in the URL with the "string" parameter, e.g. <a href="https://www.babelstone.co.uk/Unicode/whatisit.html?string=🤦Q☃á€香" title="Specify a string of Unicode characters">https://www.babelstone.co.uk/​Unicode/​whatisit.html?​string=🤦Q☃á€香</a>. See <a href="whatisit_doc.html">here</a> for additional documentation.</p>
+
+    <hr />
+
+    <p class="center"><a href="babelmap.html" title="Javascript character map">BabelMap Online</a> | <a href="unicode.html" title="Unicode Slide Show">Unicode Slide Show</a> | <a href="text.html" title="Convert Latin and/or Greek text to styled text">Unicode Text Styler</a></p>
+  </body>
+</html>
