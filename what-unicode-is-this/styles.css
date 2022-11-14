@@ -1,0 +1,145 @@
+/* Font Family */
+@font-face {
+  font-family: Montserrat;
+  src: url(fonts/Montserrat/Montserrat-VariableFont_wght.ttf);
+}
+
+body {
+  background: #fff;
+  width: 800px;
+  margin: 0 auto;
+  padding: 10px;
+  color: #333;
+  font-family: Montserrat, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  text-align: justify;
+}
+
+a:link {
+  color: #58a;
+  text-decoration: none;
+}
+
+a:visited {
+  color: #999;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #c60;
+  text-decoration: underline;
+}
+
+a img {
+  border-width: 0px;
+}
+
+p {
+  margin: 0 0 0.75em;
+  line-height: 1.6em;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+li {
+  font-size: 10pt;
+  line-height: 1.5em;
+}
+
+h1 {
+  font-size: 16pt;
+  font-weight: bold;
+  text-align: center;
+  color: #999;
+}
+
+h2 {
+  margin: 0.25em 0 0;
+  padding: 0 0 4px;
+  font-size: 14pt;
+  font-weight: bold;
+  line-height: 1.4em;
+  color: #333;
+}
+
+h3 {
+  margin: 0.25em 0 0;
+  padding: 0 0 4px;
+  font-size: 12pt;
+  font-weight: bold;
+  line-height: 1.4em;
+  color: #333;
+}
+
+h4 {
+  margin: 0.25em 0 0;
+  padding: 0 0 4px;
+  font-size: 10pt;
+  font-weight: bold;
+  line-height: 1.4em;
+  color: #333;
+}
+
+table.chart {
+  border-spacing: 0px;
+  border-collapse: collapse;
+  border-style: solid;
+  border-color: black;
+  border-width: 2px;
+}
+
+textarea {
+  background: #f3f4f5;
+  border: 0;
+  resize: none;
+  outline: none;
+}
+
+th.top {
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+  color: gray;
+}
+
+th.leftside {
+  border-right-width: 2px;
+  border-right-style: solid;
+  font-weight: bold;
+  text-align: left;
+  vertical-align: middle;
+  text-indent: 10px;
+  color: gray;
+}
+
+#edittextin {
+  width: 700px;
+  height: 26px;
+  font-family: Montserrat, sans-serif;
+  background: #f3f4f5;
+  border: none;
+}
+
+#convertbutton {
+  font-size: 15px;
+  font-family: Montserrat, sans-serif;
+  font-weight: 600 !important;
+  min-width: 70px;
+  min-height: 26px;
+  line-height: 26px;
+  background: #143642;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+p.center {
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
