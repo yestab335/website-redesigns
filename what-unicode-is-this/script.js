@@ -57014,6 +57014,2995 @@ function InitialiseConversion() {
 
       // Some browsers (IE and Edge) represent all characters as UTF-16
 			// But some browsers (Chrome and Firefox) use UTF-8 escape sequences for everything that is not Basic Latin
+      if ( param == "codes" ) {
+				if ( value.toLowerCase() == "no" ) {
+					document.getElementById( "codescheck" ).checked = false;
+				}
+			} else if ( param == "notes" ) {
+				if ( value.toLowerCase() == "no" ) {
+					document.getElementById( "notescheck" ).checked = false;
+				}
+			}
+      else if ( param == "decode" )
+			{
+				// Hack for NCR which cannot be passed through location.search
+				// because & and # have special functions in the url
+				var decodepos = location.href.search( "\\?decode=" );
+				if ( decodepos == -1 )
+				{
+					decodepos = location.href.search( "&decode=" );
+				}
+
+				if ( decodepos != -1 )
+				{
+					var querystart = ( decodepos + 8 );
+					var query = unescape( location.href.substring( querystart ) );
+					var text = ConvertFromNCR( query );
+					document.getElementById( "edittextin" ).value = text;
+					input = true;
+				}
+			} else if ( param == "char" ) {
+				// Deals with a single Unicode character
+				if ( value.length > 1 ) {
+					if ( ! IsHighSurrogate( value.charCodeAt(0) ) ) {
+						var result = ConvertFromUTF8( value );
+						value = result[1];
+					}
+				}
+				document.getElementById( "edittextin" ).value = value;
+				input = true;
+			}
+      else if ( param == "utf8" )
+			{
+				// For Chrome and Firefox
+				var newValue = "";
+				var length =0;
+				// This will abort on first invalid UTF-8 character
+				do 
+				{
+					var output = ConvertFromUTF8( value );
+					length = output[0];
+					if ( length > 0 )
+					{
+						newValue += output[1];
+						value = value.substr( output[0] );
+					}
+				} while ( length != 0 );
+				document.getElementById( "edittextin" ).value = newValue;
+				input = true;
+			} else if ( param == "unicode" ) {
+				// For IE and Edge
+				document.getElementById( "edittextin" ).value = value;
+				input = true;
+			} else if ( ( param == "string" ) || ( param == "convert" ) ) {
+				// Try parsing as UTF-8
+				var tempValue = value;
+				var newValue = "";
+				var length =0;
+				// This will abort on first invalid UTF-8 character
+				do {
+					var output = ConvertFromUTF8( tempValue );
+					length = output[0];
+					if ( length > 0 ) {
+						newValue += output[1];
+						tempValue = tempValue.substr( output[0] );
+					}
+				} while ( length != 0 );
+
+				if ( tempValue.length == 0 ) {
+					// Successfully parsed whole string as UTF-8
+					document.getElementById( "edittextin" ).value = newValue;
+					input = true;
+				} else {
+					// UTF-8 failed so treat as UTF-16
+					document.getElementById( "edittextin" ).value = value;
+					input = true;
+				}
+			}
+		}
+
+    if (input == true) {
+      OnConvertCharactersToNames();
     }
   }
+}
+
+// START HERE
+function FinaliseConversion() {
+	// Store Current State (No State Currently Stored)
+}
+
+// Utility Functions For "What Unicode Character Is This?"
+function OnConvertCharactersToNames() {
+	var codes = document.getElementById( "codescheck" ).checked;
+	var notes = document.getElementById( "notescheck" ).checked;
+	var editBoxIn = document.getElementById( "edittextin" );
+	var editBoxOut = document.getElementById( "edittextout" );
+	editBoxOut.value = ToCharacterNames( editBoxIn.value, codes, notes );
+}
+
+function OnClearText() {
+	var editBoxIn = document.getElementById( "edittextin" );
+	var editBoxOut = document.getElementById( "edittextout" );
+	editBoxIn.value = "";
+	editBoxOut.value = "";
+}
+
+function OnStartStopButton() {
+	if ( document.getElementById( "startbutton" ).value == "Start" ) {
+		if ( document.getElementById( "fontcheck" ).checked == true ) {
+			customfonts = true;
+		} else {
+			document.getElementById( "char" ).style.fontFamily = "";
+			customfonts = false;
+		}
+		document.getElementById( "startbutton" ).value = "Stop";
+		document.getElementById( "pausebutton" ).value = "Pause";
+		document.getElementById( "pausebutton" ).removeAttribute( "disabled" );
+		document.getElementById( "startblock" ).setAttribute( "disabled", true );
+		document.getElementById( "endblock" ).setAttribute( "disabled", true );
+		document.getElementById( "fontcheck" ).setAttribute( "disabled", true );
+		document.getElementById( "randombutton" ).setAttribute( "disabled", true );
+		document.getElementById( "randomcheck" ).setAttribute( "disabled", true );
+		document.getElementById( "searchcheck" ).setAttribute( "disabled", true );
+		document.getElementById( "searchtext" ).setAttribute( "disabled", true );
+		document.getElementById( "gototext" ).setAttribute( "disabled", true );
+		document.getElementById( "searchbutton" ).setAttribute( "disabled", true );
+		document.getElementById( "gotobutton" ).setAttribute( "disabled", true );
+		OnNewRange();
+		OnNewSpeed();
+		OnNewFontColour();
+		OnNewBackColour();
+		OnNewSize();
+		randomchars = false;
+		aborted = false;
+		theChar = 0;
+
+		if ( document.getElementById( "randomcheck" ).checked == true ) {
+			randomchars = true;
+			DisplayRandomCharacter();
+		} else {
+			document.getElementById( "skipbutton" ).removeAttribute( "disabled" );
+			DisplayCharacter();
+		}
+	} else {
+		OnFinish();
+	}
+}
+
+function OnFinish() {
+	document.getElementById( "startbutton" ).value = "Start";
+	document.getElementById( "pausebutton" ).value = "Pause";
+	document.getElementById( "pausebutton" ).setAttribute( "disabled", true );
+	document.getElementById( "skipbutton" ).setAttribute( "disabled", true );
+	document.getElementById( "fontcheck" ).removeAttribute( "disabled" );
+	document.getElementById( "randombutton" ).removeAttribute( "disabled" );
+	document.getElementById( "randomcheck" ).removeAttribute( "disabled" );
+	document.getElementById( "gototext" ).removeAttribute( "disabled" );
+	document.getElementById( "searchtext" ).removeAttribute( "disabled" );
+	document.getElementById( "searchcheck" ).removeAttribute( "disabled" );
+	document.getElementById( "gotobutton" ).removeAttribute( "disabled" );
+	document.getElementById( "searchbutton" ).removeAttribute( "disabled" );
+	if ( randomchars == false ) {
+		document.getElementById( "startblock" ).removeAttribute( "disabled" );
+		document.getElementById( "endblock" ).removeAttribute( "disabled" );
+		document.getElementById( "numb" ).innerHTML = "<b>Character " + charCount + " of " + totalChars + " (" + 0 + " mins. " + 0 + " secs. remaining)</b>";
+	}
+	currentBlock = theBlock;
+	currentChar = theChar;
+	randomchars = false;
+	paused = false;
+	aborted = true;
+}
+
+function OnPauseResume() {
+	if ( document.getElementById( "pausebutton" ).value == "Pause" ) {
+		document.getElementById( "skipbutton" ).setAttribute( "disabled", true );
+		document.getElementById( "pausebutton" ).value = "Resume";
+		paused = true;
+	} else {
+		document.getElementById( "pausebutton" ).value = "Pause";
+		paused = false;
+
+		if ( document.getElementById( "randomcheck" ).checked == true ) {
+			DisplayRandomCharacter();
+		} else {
+			document.getElementById( "skipbutton" ).removeAttribute( "disabled" );
+			DisplayCharacter();
+		}
+	}
+}
+
+function SetCharacter( ublock, cp ) {
+	charCount = 0;
+	var char = parseInt( cp, 16 );
+	var plane = ( ( char / 65535 ) | 0 );
+	var title = GetFullCharacterName( ublock, char, true, false );
+	var secs = ( ( ( totalChars - charCount ) / charsPerSecond ) | 0 );
+	var mins = ( ( secs / 60 ) | 0 );
+	secs = ( secs % 60 );
+	document.getElementById( "plane" ).innerHTML = "<b>" + PlaneName[plane] + "</b>";
+	document.getElementById( "block" ).innerHTML = "<b>Block " + ublock + " : " + BlockName[ublock] + "</b>";
+	document.getElementById( "numb" ).innerHTML = "<b>&nbsp;</b>";
+	document.getElementById( "name" ).innerHTML = "<b>" + title + "</b>";
+	document.getElementById( "char" ).innerHTML = "<span class='unicode'>&#x" + cp + ";</span>";
+
+	// Store Bloack And Character In Case The Custom Fonts Box Is Checked/Unchecked
+	currentBlock = ublock;
+	currentChar = char;
+}
+
+function DisplayRandomCharacter() {
+	if ( ! aborted ) {
+		if ( ! paused ) {
+			var a = RandomCharacter();
+			var ublock = a[0];
+			var char = a[1];
+
+			if ( customfonts ) {
+				document.getElementById( "char" ).style.fontFamily = BlockFonts[ublock];
+			} else {
+				document.getElementById( "char" ).style.fontFamily = "";
+			}
+
+			SetCharacter( ublock, ToHex( char ) );
+
+			setTimeout( DisplayRandomCharacter, delay );
+		}
+	}
+}
+
+function OnCustomFonts() {
+	if ( document.getElementById( "fontcheck" ).checked == true ) {
+		document.getElementById( "char" ).style.fontFamily = BlockFonts[currentBlock];
+	} else {
+		document.getElementById( "char" ).style.fontFamily = "";
+	}
+}
+
+function OnCheckRandomCharacters() {
+	if ( document.getElementById( "randomcheck" ).checked == true ) {
+		document.getElementById( "startblock" ).setAttribute( "disabled", true );
+		document.getElementById( "endblock" ).setAttribute( "disabled", true );
+	} else {
+		document.getElementById( "startblock" ).removeAttribute( "disabled" );
+		document.getElementById( "endblock" ).removeAttribute( "disabled" );
+	}
+}
+
+// Displays The User-Input Character
+// Allows PUA Characters, But Not Control, Reserced And Noncharacters
+function OnGotoButton() {
+	var cp = document.getElementById( "gototext" ).value;
+
+	if ( cp != "" ) {
+		// Strip Off Any U+ Prefix
+		if ( cp.indexOf( "U+" ) == 0 ) {
+			cp = cp.substr( 2, ( cp.length - 2 ) );
+		}
+
+		// Convert The User-Input Hex String To An Integer And Back To Hex
+		var char = HexToInt( cp );
+
+		if ( ( char.toString() == "NaN" ) || ( char < 0 ) || ( char > LastValidCodePoint ) ) {
+			alert( "Please enter a valid hexadecimal code point between 0000 and 10FFFF" );
+		} else {
+			cp = ToHex( char );
+
+			if ( IsHighSurrogate( char ) ) {
+				alert( "U+" + cp + " is a high surrogate code point" );
+			} else if ( IsLowSurrogate( char ) ) {
+				alert( "U+" + cp + " is a low surrogate code point" );
+			} else if ( IsControlCharacter( char ) ) {
+				alert( "U+" + cp + " is a control character" );
+			} else if ( IsNonCharacter( char ) ) {
+				alert( "U+" + cp + " is not a character" );
+        // It is a graphic, format, PUA or reserved character
+			} else {
+				var ublock = GetBlockForCharacter( char );
+
+				if ( ublock == -1 ) {
+					alert( "U+" + cp + " is a reserved character in an unassigned region" );
+				} else {
+					var name = GetCharacterName( ublock, char, false );
+
+					if ( name == "" ) {
+						alert( "U+" + cp + " is a reserved character in the " + BlockName[ublock] + " block" );
+					} else {
+						if ( document.getElementById( "fontcheck" ).checked == true ) {
+							document.getElementById( "char" ).style.fontFamily = BlockFonts[ublock];
+						} else {
+							document.getElementById( "char" ).style.fontFamily = "";
+						}
+
+						SetCharacter( ublock, cp );
+					}
+				}
+			}
+		}
+	}
+}
+
+function IsHighSurrogate( char ) {
+	if ( ( char >= HighSurrogateFirst ) && ( char <= HighSurrogateLast ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+function IsLowSurrogate( char ) {
+	if ( ( char >= LowSurrogateFirst ) && ( char <= LowSurrogateLast ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+function IsPrivateUseCharacter( char ) {
+	if ( ( char >= PrivateUseAreaFirst ) && ( char <= PrivateUseAreaLast ) ) {
+		return true;
+	}
+
+	if ( ( char >= SupplementaryPrivateUseArea1First ) && ( char <= SupplementaryPrivateUseArea1Last ) ) {
+		return true;
+	}
+
+	if ( ( char >= SupplementaryPrivateUseArea2First ) && ( char <= SupplementaryPrivateUseArea2Last ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+function IsControlCharacter( char ) {
+	if ( ( ( char >= ControlAreaAFirst ) && ( char <= ControlAreaALast ) ) || ( ( char >= ControlAreaBFirst ) && ( char <= ControlAreaBLast ) ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+function GetControlName( char ) {
+	var name = "";
+	var index = char;
+
+	if ( char >= 127 ) {
+		index -= 127;
+		index += 32;
+	}
+
+	name = ControlName[index];
+	return name;
+}
+
+function IsNonCharacter( char ) {
+	if ( ( char >= NonCharacterBlockFirst ) && ( char <= NonCharacterBlockLast ) ) {
+		return true;
+	}
+
+	var ch2 = ( char % 65536 );
+
+	if ( ( ch2 >= NonCharacterFirst ) && ( ch2 <= NonCharacterLast ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+function OnNewFont() {
+	if ( customfonts ) {
+		if ( BlockFonts[theBlock] != fontfamily ) {
+			fontfamily = BlockFonts[theBlock];
+			var el = document.getElementById( "char" );
+			el.style.fontFamily = fontfamily;
+		}
+	}
+}
+
+function OnNewSize() {
+	var fontsizeBox = document.getElementById( "fontsize" );
+	var el = document.getElementById( "char" );
+	el.style.fontSize = fontsizeBox.options[fontsizeBox.selectedIndex].value;
+}
+
+function OnNewFontColour() {
+	var fontcolourBox = document.getElementById( "fontcolour" );
+	var el = document.getElementById( "char" );
+	el.style.color = fontcolourBox.options[fontcolourBox.selectedIndex].value;
+}
+
+function OnNewBackColour() {
+	var backcolourBox = document.getElementById( "backcolour" );
+	var el = document.getElementById( "char" );
+	el.style.backgroundColor = backcolourBox.options[backcolourBox.selectedIndex].value;
+}
+
+function OnNewSpeed() {
+	var speedBox = document.getElementById( "displayspeed" );
+	delay = speedBox.options[speedBox.selectedIndex].value;
+	charsPerSecond = ( 1000 / delay );
+}
+
+function OnNewRange() {
+	var startBox = document.getElementById( "startblock" );
+	var endBox = document.getElementById( "endblock" );
+	startBlock = startBox.options[startBox.selectedIndex].value;
+	endBlock = endBox.options[endBox.selectedIndex].value;
+	endBlock++;
+	if ( endBlock <= startBlock ) {
+		endBlock = startBlock;
+		endBlock++;
+	}
+	lastChar = parseInt( BlockLast[endBlock], 16 );
+	totalChars = 0;
+	for ( ublock = startBlock; ublock < endBlock; ublock++ ) {
+		totalChars += BlockCount[ublock];
+	}
+}
+
+function OnSkipBlock() {
+	// Disable The Button Until We Have Moved To The Next Block
+	document.getElementById( "skipbutton" ).setAttribute( "disabled", true );
+
+	// Signal NextDisplayCharacter To Skip To The Next Block
+	skipBlock = true;
+}
+
+function DisplayCharacter() {
+	if ( ! aborted ) {
+		// Schedule The Next Character To Be Displayed
+		if ( ! paused ) {
+			// Increment The Curent Character
+			NextDisplayCharacter();
+
+			// Display The Character If We Have Not Finished Yet (Double Check In Case Something Goes Wrong Skipping Blocks)
+			if ( ( charCount < totalChars ) && ( theChar <= lastChar ) ) {
+				charCount++;
+				var name = GetNextCharacterName();
+				var formalAlias = GetFormalAlias( theBlock, theChar, true );
+				var secs = ( ( ( totalChars - charCount ) / charsPerSecond ) | 0 );
+				var mins = ( ( secs / 60 ) | 0 );
+				secs = ( secs % 60 );
+				document.getElementById( "numb" ).innerHTML = "<b>Character " + charCount + " of " + totalChars + " (" + mins + " mins. " + secs + " secs. remaining)</b>";
+				if ( formalAlias.length > 0 ) {
+					document.getElementById( "name" ).innerHTML = "<b>U+" + codepoint + " : " + name + " (alias " + formalAlias + ")</b>";
+				} else {
+					document.getElementById( "name" ).innerHTML = "<b>U+" + codepoint + " : " + name + "</b>";
+				}
+				document.getElementById( "char" ).innerHTML = "<span class='unicode'>&#x" + codepoint + ";</span>";
+				setTimeout( DisplayCharacter, delay );
+			} else {
+				OnFinish();
+			}
+		}
+	}
+}
+
+function NextDisplayCharacter() {
+	// We Don't Display Control Characters (Especially Not NULL) So We Use This To Indicate We Are Starting
+	if ( theChar == 0 ) {
+		charCount = 0;
+		theBlock = startBlock;
+		OnNewFont();
+		blockStart = parseInt( BlockStart[theBlock], 16 );
+		blockEnd = parseInt( BlockLast[theBlock], 16 );
+		nameTable = CharacterNameTables[theBlock];
+		theChar = blockStart;
+		tableIndex = 0;
+
+		thePlane = ( ( blockStart / 65535 ) | 0 );
+		document.getElementById( "plane" ).innerHTML = "<b>" + PlaneName[thePlane] + "</b>";
+		document.getElementById( "block" ).innerHTML = "<b>Block " + theBlock + " : " + BlockName[theBlock] + "</b>";
+	} else {
+		if ( skipBlock == true ) {
+			charCount += CountOfCharacters( theBlock, theChar, blockEnd );
+			theChar = blockEnd;
+			skipBlock = false;
+		}
+
+		theChar++;
+		tableIndex++;
+
+		if ( theChar > blockEnd ) {
+			document.getElementById( "skipbutton" ).removeAttribute( "disabled" );
+			theBlock++;
+
+			while ( BlockCount[theBlock] == 0 ) {
+				theBlock++;
+			}
+
+			if ( theBlock < endBlock ) {
+				OnNewFont();
+				blockStart = parseInt( BlockStart[theBlock], 16 );
+				blockEnd = parseInt( BlockLast[theBlock], 16 );
+				nameTable = CharacterNameTables[theBlock];
+				theChar = blockStart;
+				tableIndex = 0;
+
+				if ( theBlock == HangulSyllables_Block ) {
+					hangulLeadingIndex = 0;
+					hangulVowelIndex = 0;
+					hangulTrailingIndex = 0;
+				}
+
+				var newPlane = ( ( blockStart / 65535 ) | 0 );
+				if ( thePlane != newPlane ) {
+					thePlane = newPlane;
+					document.getElementById( "plane" ).innerHTML = "<b>" + PlaneName[thePlane] + "</b>";
+				}
+
+				document.getElementById( "block" ).innerHTML = "<b>Block " + theBlock + " : " + BlockName[theBlock] + "</b>";
+			}
+		}
+	}
+}
+
+function ToHex( char ) {
+	var cp = char.toString( 16 ).toUpperCase();
+	while ( cp.length < 4 ) {
+		cp = '0' + cp;
+	}
+
+	return cp;
+}
+
+// Return The Block Index For The Given Codepoint
+// Returns -1 If The Code Point Is Not In An Assigned Block
+function GetBlockForCharacter( char ) {
+	for ( ublock = 0; ublock < NumBlocks; ublock++ ) {
+		var first = parseInt( BlockStart[ublock], 16 );
+		var last = parseInt( BlockEnd[ublock], 16 );
+
+		if ( ( char >= first ) && ( char <= last ) ) {
+			return ublock;
+		}
+	}
+
+	return -1;
+}
+
+// Returns The Character Name For The Next Character Being Iterated (And Increments Our CUrrent Character Position)
+function GetNextCharacterName() {
+	var name;
+	codepoint = ToHex( theChar );
+
+	if ( nameTable == null ) {
+		switch ( theBlock.toString() )
+		{
+		case ( CJKUnifiedIdeographsExtensionA_Block ) :
+		case ( CJKUnifiedIdeographs_Block ) :
+		case ( CJKUnifiedIdeographsExtensionB_Block ) :
+		case ( CJKUnifiedIdeographsExtensionC_Block ) :
+		case ( CJKUnifiedIdeographsExtensionD_Block ) :
+		case ( CJKUnifiedIdeographsExtensionE_Block ) :
+		case ( CJKUnifiedIdeographsExtensionF_Block ) :
+		case ( CJKUnifiedIdeographsExtensionG_Block ) :
+		case ( CJKUnifiedIdeographsExtensionH_Block ) :
+			name = "CJK UNIFIED IDEOGRAPH-" + codepoint;
+			break;
+
+		case ( CJKCompatibilityIdeographs_Block ) :
+			// Hack For Two Reserved Characters In The Middle Of The Block
+			
+      // FA6E..FA6F
+      if ( codepoint == "FA6E" ) {
+				theChar += 2;
+				tableIndex += 2;
+				codepoint = ToHex( theChar );
+			}
+			name = "CJK COMPATIBILITY IDEOGRAPH-" + codepoint;
+			break;
+
+		case ( CJKCompatibilityIdeographsSupplement_Block ) :
+			name = "CJK COMPATIBILITY IDEOGRAPH-" + codepoint;
+			break;
+
+		case ( HangulSyllables_Block ) :
+			name = "HANGUL SYLLABLE " + CombineJamo( hangulLeadingIndex, hangulVowelIndex, hangulTrailingIndex );
+			hangulTrailingIndex++;
+			if ( hangulTrailingIndex >= TrailingJamoCount ) {
+				hangulTrailingIndex = 0;
+				hangulVowelIndex++;
+				if ( hangulVowelIndex >= VowelJamoCount ) {
+					hangulVowelIndex = 0;
+					hangulLeadingIndex++;
+				}
+			}
+			break;
+
+		case ( Tangut_Block ) :
+		case ( TangutSupplement_Block ) :
+			name = "TANGUT IDEOGRAPH-" + codepoint;
+			break;
+
+		case ( KhitanSmallScript_Block ) :
+			name = "KHITAN SMALL SCRIPT CHARACTER-" + codepoint;
+			break;
+
+		case ( Nushu_Block ) :
+			name = "NUSHU CHARACTER-" + codepoint;
+			break;
+
+		default :
+			break;
+		}
+	} else {
+		name = nameTable[tableIndex];
+
+		// Skip over reserved characters
+		while ( name == "" ) {
+			theChar++;
+			tableIndex++;
+			codepoint = ToHex( theChar );
+			name = nameTable[tableIndex];
+		}
+	}
+
+	return name;
+}
+
+// Returns The Character Name For A Given Character
+function GetNameForCharacter( char, isPrefixCode, isAppendNotes ) {
+	var ublock = GetBlockForCharacter( char );
+	var name = GetFullCharacterName( ublock, char, isPrefixCode, isAppendNotes );
+
+	if ( isAppendNotes ) {
+		var notes = GetCharacterNotes( ublock, char );
+		if ( notes.length > 0 ) {
+			if ( notes[0] == '=' ) {
+				name += " " + notes;
+			} else {
+				name += " {" + notes + "}";
+			}
+		}
+	}
+
+	return name;
+}
+
+// Returns The Character Name For A Given BLock And Character
+function GetFullCharacterName( ublock, char, prefix, extra ) {
+	var title = "";
+
+	if ( prefix ) {
+		title = "U+" + ToHex( char ) + " : ";
+	}
+
+	var name = GetCharacterName( ublock, char, true );
+
+	if ( name == "" ) {
+		var cp = ToHex( char );
+		if ( IsControlCharacter( char ) ) {
+			name = "<control>";
+			var ctrlname = GetControlName( char );
+			if ( ctrlname != "" ) {
+				name += " " + ctrlname;
+			}
+		} else if ( IsPrivateUseCharacter( char ) ) {
+			name = "<private-use>";
+		} else if ( IsNonCharacter( char ) ) {
+			name = "<noncharacter>";
+		} else if ( ( char >= HighSurrogateFirst ) && ( char <= HighSurrogateLast ) ) {
+			name = "<surrogate>";
+		} else if ( ( char >= LowSurrogateFirst ) && ( char <= LowSurrogateLast ) ) {
+			name = "<surrogate>";
+		} else if ( char > LastValidCodePoint ) {
+			name = "<invalid>";
+		} else {
+			name = "<reserved>";
+		}
+	}
+
+	title += name;
+
+	if ( extra ) {
+		var formalAlias = GetFormalAlias( ublock, char, true );
+		if ( formalAlias.length > 0 ) {
+			title += " (alias " + formalAlias + ")";
+		}
+
+		if ( ublock == Tangut_Block ) {
+			title += " (" + GetTangutReference1( char ) + ")";
+		}
+
+		if ( ublock == TangutSupplement_Block ) {
+			title += " (" + GetTangutReference2( char ) + ")";
+		}
+	}
+
+	return title;
+}
+
+function GetInformativeAliases( char )
+{
+	var aliases = "";
+	var start = 0;
+	if ( char > 0xFFFF )
+	{
+		start = 1260;
+	}
+	for ( var i = start; ( i < InformativeAliasesCount ) && ( char >= InformativeAliases[i][0] ); i++ )
+	{
+		if ( char == InformativeAliases[i][0] )
+		{
+			if ( aliases.length > 0 )
+			{
+				aliases += "; ";
+			}
+			aliases += InformativeAliases[i][1];
+		}
+	}
+	return aliases;
+}
+
+// Gets the abbreviation for formal character name only
+// Other abbreviations are pre-appended to the alias name
+function GetAbbreviation( ublock, char, formal )
+{
+	var abbreviation = "";
+	var blockStart = 0;
+	var index = 0;
+	switch ( ublock.toString() )
+	{
+	case ( BasicLatin_Block ) :
+	case ( Latin1Supplement_Block ) :
+	case ( CombiningDiacriticalMarks_Block ) :
+	case ( Arabic_Block ) :
+	case ( Mongolian_Block ) :
+	case ( GeneralPunctuation_Block ) :
+	case ( ArabicPresentationFormsB_Block ) :
+		for ( var i = 0; ( i < AbbreviationsCount ) && ( char >= Abbreviations[i][0] ); i++ )
+		{
+			if ( Abbreviations[i][0] == char )
+			{
+				abbreviation = Abbreviations[i][1];
+				break;
+			}
+		}
+		break;
+
+	case ( VariationSelectors_Block ) :
+		blockStart = parseInt( BlockStart[VariationSelectors_Block], 16 );
+		index = ( char - blockStart ) + 1;
+		abbreviation = "VS" + index;
+		break;
+
+	case ( VariationSelectorsSupplement_Block ) :
+		blockStart = parseInt( BlockStart[VariationSelectorsSupplement_Block], 16 );
+		index = ( char - blockStart ) + 17;
+		abbreviation = "VS" + index;
+		break;
+
+	default :
+		break;
+	}
+	return abbreviation;
+}
+
+function GetTangutReference1( char )
+{
+	var ref = "";
+	var blockStart = parseInt( BlockStart[Tangut_Block], 16 );
+	var index = ( char - blockStart );
+	if ( index < TangutReferencesCount1 )
+	{
+		ref = TangutReferences1[index];
+	}
+	return ref;
+}
+
+function GetTangutReference2( char )
+{
+	var ref = "";
+	var blockStart = parseInt( BlockStart[TangutSupplement_Block], 16 );
+	var index = ( char - blockStart );
+	if ( index < TangutReferencesCount2 )
+	{
+		ref = TangutReferences2[index];
+	}
+	return ref;
+}
+
+function GetTangutMeanings1( char )
+{
+	var ref = "";
+	var blockStart = parseInt( BlockStart[Tangut_Block], 16 );
+	var index = ( char - blockStart );
+	if ( index < TangutReferencesCount1 )
+	{
+		ref = TangutMeanings1[index];
+	}
+	return ref;
+}
+
+function GetTangutMeanings2( char )
+{
+	var ref = "";
+	var blockStart = parseInt( BlockStart[TangutSupplement_Block], 16 );
+	var index = ( char - blockStart );
+	if ( index < TangutReferencesCount2 )
+	{
+		ref = TangutMeanings2[index];
+	}
+	return ref;
+}
+
+function GetKhitanSmallScriptReading( char )
+{
+	var ref = "";
+	var blockStart = parseInt( BlockStart[KhitanSmallScript_Block], 16 );
+	var index = ( char - blockStart );
+	if ( index < KhitanSmallScriptCount )
+	{
+		ref = KhitanSmallScriptReadings[index];
+	}
+	return ref;
+}
+
+function GetEgyptianHieroglyphDescription( char )
+{
+	var ref = "";
+	var blockStart = parseInt( BlockStart[EgyptianHieroglyphs_Block], 16 );
+	var index = ( char - blockStart );
+	if ( index < EgyptianHieroglyphCount )
+	{
+		ref = EgyptianHieroglyphDescriptions[index];
+	}
+	return ref;
+}
+
+// Returns notes or aliases for the given character
+function GetCharacterNotes( ublock, char )
+{
+	var notes = "";
+	switch ( ublock.toString() )
+	{
+	case ( Tangut_Block ) :
+		notes = GetTangutMeanings1( char );
+		break;
+
+	case ( TangutSupplement_Block ) :
+		notes = GetTangutMeanings2( char );
+		break;
+
+	case ( KhitanSmallScript_Block ) :
+		notes = GetKhitanSmallScriptReading( char );
+		break;
+
+	case ( EgyptianHieroglyphs_Block ) :
+		notes = GetEgyptianHieroglyphDescription( char );
+		break;
+
+	case ( CJKCompatibilityIdeographs_Block ) :
+		notes = GetCjkCompatibilityMapping( ublock, char );
+		break;
+
+	case ( CJKCompatibilityIdeographsSupplement_Block ) :
+		notes = GetCjkCompatibilityMapping( ublock, char );
+		break;
+
+	default :
+		notes = GetInformativeAliases( char );
+		break;
+	}
+	return notes;
+}
+
+// Returns the character name for a given block and character (will return an empty string if the character is reserved etc.)
+function GetCharacterName( ublock, char, abbrev )
+{
+	var name = "";
+	var cp = ToHex( char );
+	var table = CharacterNameTables[ublock];
+
+	if ( char <= parseInt( BlockLast[ublock], 16 ) )
+	{
+		if ( table == null )
+		{
+			switch ( ublock.toString() )
+			{
+			case ( CJKUnifiedIdeographsExtensionA_Block ) :
+			case ( CJKUnifiedIdeographs_Block ) :
+			case ( CJKUnifiedIdeographsExtensionB_Block ) :
+			case ( CJKUnifiedIdeographsExtensionC_Block ) :
+			case ( CJKUnifiedIdeographsExtensionD_Block ) :
+			case ( CJKUnifiedIdeographsExtensionE_Block ) :
+			case ( CJKUnifiedIdeographsExtensionF_Block ) :
+			case ( CJKUnifiedIdeographsExtensionG_Block ) :
+			case ( CJKUnifiedIdeographsExtensionH_Block ) :
+				name = "CJK UNIFIED IDEOGRAPH-" + cp;
+				break;
+
+			case ( CJKCompatibilityIdeographs_Block ) :
+				// Ignore two reserved characters in the middle of the block
+				if ( ( cp != "FA6E" ) && ( cp != "FA6F" ) )
+				{
+					name = "CJK COMPATIBILITY IDEOGRAPH-" + cp;
+				}
+				break;
+
+			case ( CJKCompatibilityIdeographsSupplement_Block ) :
+				name = "CJK COMPATIBILITY IDEOGRAPH-" + cp;
+				break;
+
+			case ( HangulSyllables_Block ) :
+				name = "HANGUL SYLLABLE " + GetHangulName( char );
+				break;
+
+			case ( Tangut_Block ) :
+			case ( TangutSupplement_Block ) :
+				name = "TANGUT IDEOGRAPH-" + cp;
+				break;
+
+			case ( KhitanSmallScript_Block ) :
+				name = "KHITAN SMALL SCRIPT CHARACTER-" + cp;
+				break;
+
+			case ( Nushu_Block ) :
+				name = "NUSHU CHARACTER-" + cp;
+				break;
+
+			default :
+				break;
+			}
+		}
+		else
+		{
+			var start = parseInt( BlockStart[ublock], 16 );
+			if ( char >= start )
+			{
+				name = table[char-start];
+			}
+		}
+
+		if ( abbrev )
+		{
+			// We don't want abbreviations for control characters
+			if ( name != "" )
+			{
+				var abbreviation = GetAbbreviation( ublock, char, false );
+				if ( abbreviation.length > 0 )
+				{
+					name += " [" + abbreviation + "]";
+				}
+			}
+		}
+	}
+	
+	if ( name == null )
+	{
+		// Otherwise it returns a null string, and we are testing for an empty string
+		name = "";
+	}
+
+	return name;
+}
+
+// We don't use this function when iterating through the Hangul Syllables block
+function GetHangulName( char )
+{
+	var hangul;
+
+	if ( ( char >= FirstHangul ) && ( char <= LastHangul ) )
+	{
+		var hangulIndex = ( char - FirstHangul );
+		var leadingIndex = ( hangulIndex / FinalJamoCount ) | 0;
+		var vowelIndex = ( ( hangulIndex % FinalJamoCount ) / TrailingJamoCount ) | 0;
+		var trailingIndex = ( hangulIndex % TrailingJamoCount ) | 0;
+		hangul = CombineJamo( leadingIndex, vowelIndex, trailingIndex );
+	}
+
+	return hangul;
+}
+
+function GetCjkCompatibilityMapping( ublock, char )
+{
+	var mapping = "";
+	var blockStart = 0;
+	var index =0;
+	var base = 0;
+	var vs = 0;
+
+	switch ( ublock.toString() )
+	{
+	case ( CJKCompatibilityIdeographs_Block ) :
+		blockStart = parseInt( BlockStart[ublock], 16 );
+		index = ( char - blockStart );
+		if ( index < CJKCompatIdsCount )
+		{
+			base = CJKCompatIds[index][0];
+			vs = CJKCompatIds[index][1];
+		}
+		break;
+
+	case ( CJKCompatibilityIdeographsSupplement_Block ) :
+		blockStart = parseInt( BlockStart[ublock], 16 );
+		index = ( char - blockStart );
+		if ( index < CJKCompatIdsSuppCount )
+		{
+			base = CJKCompatIdsSupp[index][0];
+			vs = CJKCompatIdsSupp[index][1];
+		}
+		break;
+
+	default :
+		break;
+	}
+
+	if ( base > 0 )
+	{
+		mapping = "= U+" + ToHex( base ) + " + VS" + ( vs + 1 - FirstVariationSelector );
+	}
+
+	return mapping;
+}
+
+function GetFormalAlias( ublock, char, abbrev )
+{
+	var alias = "";
+
+	switch ( ublock.toString() )
+	{
+	case ( LatinExtendedB_Block ) :
+	case ( Syriac_Block ) :
+	case ( Kannada_Block ) :
+	case ( Lao_Block ) :
+	case ( Tibetan_Block ) :
+	case ( HangulJamo_Block ) :
+	case ( LetterlikeSymbols_Block ) :
+	case ( OpticalCharacterRecognition_Block ) :
+	case ( MiscellaneousSymbolsandArrows_Block ) :
+	case ( YiSyllables_Block ) :
+	case ( MyanmarExtendedA_Block ) :
+	case ( VerticalForms_Block ) :
+	case ( ArabicPresentationFormsB_Block ) :
+	case ( Cuneiform_Block ) :
+	case ( Medefaidrin_Block ) :
+	case ( KanaSupplement_Block ) :
+	case ( ByzantineMusicalSymbols_Block ) :
+		for ( var i = 0; ( i < FormalAliasesCount ) && ( char >= FormalAliases[i][0] ); i++ )
+		{
+			if ( FormalAliases[i][0] == char )
+			{
+				alias = FormalAliases[i][1];
+
+				// Special case for only alias with an abbreviation
+				if ( ( abbrev ) && ( char == 0xFEFF ) )
+				{
+					alias += " [BOM]";
+				}
+			}
+		}
+		break;
+
+	default :
+		break;
+	}
+
+	return alias;
+}
+
+function CombineJamo( leadingIndex, vowelIndex, trailingIndex )
+{
+	var hangul;
+
+	if ( leadingIndex == 11 )		// Null initial
+	{
+		if ( trailingIndex == 0 )		// Null final
+		{
+			hangul = VowelJamo[vowelIndex];
+		}
+		else
+		{
+			hangul = VowelJamo[vowelIndex] + TrailingJamo[trailingIndex];
+		}
+	}
+	else
+	{
+		if ( trailingIndex == 0 )		// Null final
+		{
+			hangul = LeadingJamo[leadingIndex] + VowelJamo[vowelIndex];
+		}
+		else
+		{
+			hangul = LeadingJamo[leadingIndex] + VowelJamo[vowelIndex] + TrailingJamo[trailingIndex];
+		}
+	}
+
+	return hangul;
+}
+
+function OnRandomCharacter()
+{
+	var a = RandomCharacter();
+	var ublock = a[0];
+	var char = a[1];
+
+	if ( document.getElementById( "fontcheck" ).checked == true )
+	{
+		document.getElementById( "char" ).style.fontFamily = BlockFonts[ublock];
+	}
+	else
+	{
+		document.getElementById( "char" ).style.fontFamily = "";
+	}
+
+	SetCharacter( ublock, ToHex( char ) );
+}
+
+// Does not return a random Unicode character otherwise it would be a CJK unified ideograph most of the time
+// But returns a random character in a random block
+function RandomCharacter()
+{
+	var ublock = 0;
+	var t = 0;
+
+	// Ignore private use areas
+	while ( t == 0 )
+	{
+		ublock = RandomNumber( 0, NumBlocks -1 );
+		t = BlockCount[ublock];
+	}
+
+	var char = 0;
+	var name = "";
+
+	while ( name == "" )
+	{
+		var first = parseInt( BlockStart[ublock], 16 );
+		var last = parseInt( BlockLast[ublock], 16 );
+		char = RandomNumber( first, last );
+		name = GetCharacterName( ublock, char, false );
+	}
+
+	return [ublock,char];
+}
+
+function RandomNumber( from, to )
+{
+	return Math.floor( Math.random() * ( to - from + 1 ) + from );
+}
+
+function OnSearchButton()
+{
+	var found = OnFindCharacter();
+
+	if ( found == true )
+	{
+		if ( document.getElementById( "fontcheck" ).checked == true )
+		{
+			document.getElementById( "char" ).style.fontFamily = BlockFonts[searchBlock];
+		}
+		else
+		{
+			document.getElementById( "char" ).style.fontFamily = "";
+		}
+
+		SetCharacter( searchBlock, ToHex( searchChar ) );
+	}
+}
+
+function OnFindCharacter()
+{
+	var found = false;
+
+	var originalSearchString = document.getElementById( "searchtext" ).value;
+
+	if ( originalSearchString != "" )
+	{
+		// Character names are stored in upper case
+		newSearchString = originalSearchString.toUpperCase();
+
+		var valid = true;
+
+		// Validate that the string only contains valid characters (A-Z, 0-9, hyphen and space) [I've never got the hang of regex, so do it longhand]
+		for ( var i = 0; i < newSearchString.length; i++ )
+		{
+			var char = newSearchString.charAt( i );
+			if ( ( char == ' ' ) || ( char == '-' ) || ( ( char >= 'A' ) && ( char <= 'Z' ) ) || ( ( char >= '0' ) && ( char <= '9' ) ) )
+			{
+			}
+			else
+			{
+				valid = false;
+				break;
+			}
+		}
+
+		if ( valid )
+		{
+			searchExactName = false;
+
+			if ( document.getElementById( "searchcheck" ).checked == true )
+			{
+				searchExactName = true;
+
+				if ( newSearchString.length < ShortestCharacterName )
+				{
+					valid = false;
+					alert( "'" + originalSearchString + "' is too short (character names are at least " + ShortestCharacterName + " characters long)" );
+				}
+			}
+
+			if ( newSearchString.length > LongestCharacterName )
+			{
+				valid = false;
+				alert( "'" + originalSearchString + "' is too long (character names are no more than " + LongestCharacterName + " characters long)" );
+			}
+
+			if ( valid )
+			{
+				found = FindCharacter( newSearchString );
+				
+				if ( ! found )
+				{
+					alert( "'" + originalSearchString + "' not found" );
+				}
+			}
+		}
+		else
+		{
+			alert( originalSearchString + " contains invalid characters (only A-Z, 0-9, space and hyphen allowed)" );
+		}
+	}
+
+	return found;
+}
+
+function FindCharacter( newSearchString )
+{
+	// Skip CJK Unified Ideograph blocks if possible
+	searchCjkUnifiedIdeographs = false;	// Assume the search string is not part of a CJK Unified Ideograph name unless determined otherwise
+	searchTangutIdeographs = false;
+	searchKhitanSmallCharacters = false;
+	searchNushuCharacters = false;
+	searchHangulSyllables = false;
+
+	var cjkname = "CJK UNIFIED IDEOGRAPH-";
+	var tangutname = "TANGUT IDEOGRAPH-";
+	var khitansmallname = "KHITAN SMALL SCRIPT CHARACTER-";
+	var nushuname = "NUSHU CHARACTER-";
+	var hangulname = "HANGUL SYLLABLE ";
+
+	if ( searchExactName == true )
+	{
+		if ( ( newSearchString.indexOf( cjkname ) == 0 ) && ( newSearchString.length > cjkname.length ) )
+		{
+			searchCjkUnifiedIdeographs = true;
+		}
+		if ( ( newSearchString.indexOf( tangutname ) == 0 ) && ( newSearchString.length > tangutname.length ) )
+		{
+			searchTangutIdeographs = true;
+		}
+		if ( ( newSearchString.indexOf( khitansmallname ) == 0 ) && ( newSearchString.length > khitansmallname.length ) )
+		{
+			searchKhitanSmallCharacters = true;
+		}
+		if ( ( newSearchString.indexOf( nushuname ) == 0 ) && ( newSearchString.length > nushuname.length ) )
+		{
+			searchNushuCharacters = true;
+		}
+		if ( ( newSearchString.indexOf( hangulname ) == 0 ) && ( newSearchString.length > hangulname.length ) )
+		{
+			searchHangulSyllables = true;
+		}
+	}
+	else
+	{
+		// Always search through the Hangul Syllables block if matching partial names
+		searchHangulSyllables = true;
+
+		// Dealing with CJK etc. is a little finicky
+		// Divide the string into two parts about the first hyphen
+		var s = newSearchString.split( "-" );
+		var leftString;
+		var rightString;
+
+		if ( s.length == 1 )	// No hyphen
+		{
+			if ( cjkname.indexOf( newSearchString ) >= 0 )
+			{
+				// The search string is part of the fixed part of the name
+				searchCjkUnifiedIdeographs = true;
+			}
+			else if ( tangutname.indexOf( newSearchString ) >= 0 )
+			{
+				// The search string is part of the fixed part of the name
+				searchTangutIdeographs = true;
+			}
+			else if ( khitansmallname.indexOf( newSearchString ) >= 0 )
+			{
+				// The search string is part of the fixed part of the name
+				searchKhitanSmallCharacters = true;
+			}
+			else if ( nushuname.indexOf( newSearchString ) >= 0 )
+			{
+				// The search string is part of the fixed part of the name
+				searchNushuCharacters = true;
+			}
+			else
+			{
+				var hex = HexToInt( newSearchString );
+				if ( ( hex.toString() != "NaN" ) && ( newSearchString.length < 6 ) )
+				{
+					// The search string is a hex number between 1 and 5 characters in length which may be in the code point part of the name
+					// Could validate the value of CJK code point more thoroughly but I can't be bothered to
+					if ( ( hex > BlockStart[Tangut_Block] ) && ( hex <= BlockEnd[Tangut_Block] ) )
+					{
+						searchTangutIdeographs = true;
+					}
+					else if ( ( hex > BlockStart[TangutSupplement_Block] ) && ( hex <= BlockEnd[TangutSupplement_Block] ) )
+					{
+						searchTangutIdeographs = true;
+					}
+					else if ( ( hex > BlockStart[KhitanSmallScript_Block] ) && ( hex <= BlockEnd[KhitanSmallScript_Block] ) )
+					{
+						searchKhitanSmallCharacters = true;
+					}
+					else if ( ( hex > BlockStart[Nushu_Block] ) && ( hex <= BlockEnd[Nushu_Block] ) )
+					{
+						searchNushuCharacters = true;
+					}
+					else if ( hex < LastCjkUnifiedIdeograph )
+					{
+						searchCjkUnifiedIdeographs = true;
+					}
+				}
+			}
+		}
+		else if ( s.length == 2 )	// Single hyphen
+		{
+			leftString = s[0] + "-";
+			rightString = s[1];
+			if ( cjkname.indexOf( leftString ) >= 0 )
+			{
+				// Both left and right parts have to match
+				var hex = HexToInt( rightString );
+				if ( ( hex.toString() != "NaN" ) && ( rightString.length < 6 ) )
+				{
+					// The search string is a hex number between 1 and 5 characters in length which may be in the code point part of the name
+					// Could validate the value of the code point more thoroughly but I can't be bothered to
+					if ( hex < LastCjkUnifiedIdeograph )
+					{
+						searchCjkUnifiedIdeographs = true;
+					}
+				}
+			}
+		}
+		else	// More than one hyphen
+		{
+			// No CJK Unified Ideograph character name has more than one hyphen (can you think which character names do have more than one hyphen in them?)
+			searchCjkUnifiedIdeographs = false;
+			searchTangutIdeographs = false;
+			searchKhitanSmallCharacters = false;
+			searchNushuCharacters = false;
+		}
+	}
+
+	// If it is a new search term or an exact match required start from the beginning
+	// Otherwise continue from the last search position
+	if ( ( newSearchString == searchString ) && ( searchExactName == false ) )
+	{
+		searchStartBlock = searchBlock;
+		searchStartChar = searchChar;
+		var a = NextCharacter( searchBlock, searchChar );
+		searchBlock = a[0];
+		searchChar = a[1];
+	}
+	else
+	{
+		searchString = newSearchString;
+		searchFirstFindBlock = -1;
+		searchFirstFindChar = -1;
+		searchBlock = 0;
+		searchChar = parseInt( BlockStart[searchBlock], 16 );
+	}
+
+	var found = false;
+
+	do
+	{
+		var name = GetCharacterName( searchBlock, searchChar, false );
+		var alias = GetFormalAlias( searchBlock, searchChar, false );
+		var abbreviation = GetAbbreviation( searchBlock, searchChar, false );
+		var formalAbbr = GetAbbreviation( searchBlock, searchChar, true );
+
+		if ( searchExactName == true )
+		{
+			if ( ( name == searchString ) || ( alias == searchString ) || ( abbreviation == searchString ) || ( formalAbbr == searchString ) )
+			{
+				found = true;
+				break;
+			}
+		}
+		else
+		{
+			var match = false;
+			if ( ( name != "" ) && ( name.indexOf( searchString ) >= 0 ) )
+			{
+				match = true;
+			}
+			if ( ( alias != "" ) && ( alias.indexOf( searchString ) >= 0 ) )
+			{
+				match = true;
+			}
+			if ( ( abbreviation != "" ) && ( abbreviation.indexOf( searchString ) >= 0 ) )
+			{
+				match = true;
+			}
+			if ( ( formalAbbr != "" ) && ( formalAbbr.indexOf( searchString ) >= 0 ) )
+			{
+				match = true;
+			}
+			if ( match == true )
+			{
+				if ( searchFirstFindChar == -1 )
+				{
+					searchFirstFindBlock = searchBlock;
+					searchFirstFindChar = searchChar;
+				}
+				found = true;
+				break;
+			}
+		}
+
+		var a = NextCharacter( searchBlock, searchChar );
+		searchBlock = a[0];
+		searchChar = a[1];
+	} while ( searchChar != LastChar )
+
+	// If we've reached the end with no hit then go to the first match if there is one
+	if ( ( found == false ) && ( searchExactName == false ) && ( searchFirstFindChar != -1 ) )
+	{
+		if ( ( searchStartBlock != searchBlock ) && ( searchStartChar != searchChar ) )
+		{
+			searchBlock = searchFirstFindBlock;
+			searchChar = searchFirstFindChar;
+			found = true;
+		}
+	}
+
+	return found;
+}
+
+function NextCharacter( ublock, char )
+{
+	var last = parseInt( BlockLast[ublock], 16 );
+	var name = "";
+
+	while ( ( name == "" ) && ( char < last ) )
+	{
+		char++;
+		name = GetCharacterName( ublock, char, false );
+	}
+
+	if ( name == "" )
+	{
+		var t = 0;
+
+		while ( t == 0 )
+		{
+			ublock++;
+
+			if ( ublock >= NumBlocks )
+			{
+				ublock = 0;
+			}
+
+			t = BlockCount[ublock];
+
+			if ( searchCjkUnifiedIdeographs == false )
+			{
+				switch ( ublock.toString() )
+				{
+				case ( CJKUnifiedIdeographsExtensionA_Block ) :
+				case ( CJKUnifiedIdeographs_Block ) :
+				case ( CJKUnifiedIdeographsExtensionB_Block ) :
+				case ( CJKUnifiedIdeographsExtensionC_Block ) :
+				case ( CJKUnifiedIdeographsExtensionD_Block ) :
+				case ( CJKUnifiedIdeographsExtensionE_Block ) :
+				case ( CJKUnifiedIdeographsExtensionF_Block ) :
+				case ( CJKUnifiedIdeographsExtensionG_Block ) :
+				case ( CJKUnifiedIdeographsExtensionH_Block ) :
+					t = 0;
+					break;
+
+				default :
+					break;
+				}
+			}
+
+			if ( searchTangutIdeographs == false )
+			{
+				if ( ublock.toString() == Tangut_Block )
+				{
+					t = 0;
+				}
+			}
+
+			if ( searchKhitanSmallCharacters == false )
+			{
+				if ( ublock.toString() == KhitanSmallScript_Block )
+				{
+					t = 0;
+				}
+			}
+
+			if ( searchNushuCharacters == false )
+			{
+				if ( ublock.toString() == Nushu_Block )
+				{
+					t = 0;
+				}
+			}
+		}
+
+		char = parseInt( BlockStart[ublock], 16 );
+	}
+
+	return [ublock,char];
+}
+
+// Validates a user-input hex string (use parseInt() elsewhere)
+function HexToInt( hex )
+{
+	for ( var i = 0; i < hex.length; i++ )
+	{
+		var char = hex.charAt( i );
+		if ( ( ( char >= 'A' ) && ( char <= 'F' ) ) || ( ( char >= 'a' ) && ( char <= 'f' ) ) || ( ( char >= '0' ) && ( char <= '9' ) ) )
+		{
+		}
+		else
+		{
+			return NaN;
+		}
+	}
+
+	return parseInt( hex, 16 );
+}
+
+// Returns the number of characters between start and end
+function CountOfCharacters( ublock, start, end )
+{
+	var b1 = parseInt( BlockStart[ublock], 16 );
+	var b2 = parseInt( BlockEnd[ublock], 16 );
+
+	var total = ( end - start );
+
+	if ( ( b2 - b1 + 1 ) != BlockCount[ublock] )
+	{
+		var table = CharacterNameTables[ublock];
+
+		if ( table == null )
+		{
+			if ( ublock.toString() == CJKCompatibilityIdeographs_Block )
+			{
+				if ( ( start < 64110 ) && ( end > 64111 ) )		// FA6E..FA6F
+				{
+					total -= 2;
+				}
+			}
+		}
+		else
+		{
+			for ( var i = ( start - b1 ); i < ( end - b1 ); i++ )
+			{
+				if ( table[i] == "" )
+				{
+					total--;
+				}
+			}
+		}
+	}
+
+	return total;
+}
+
+// BabelMap Constants
+var CharsPerRow = 16;
+var CharsPerPage = 1024;
+var CharsPerChart = 1280;
+var MaxRowsPerChart = 80;	// Allow up to 80 rows for a single chart (covers Yi Syllables and Egyptian Hieroglyphs)
+var MaxRowsPerPage = 64;	// But for blocks with greater than 80 rows, display in pages of up 64 rows
+
+// Current chart state
+var chartFontName = "";
+var chartFontSize = "20pt";
+var chartControlFontColour = "Silver";
+var chartControlBackColour = "Silver";
+var chartReservedFontColour = "White";
+var chartReservedBackColour = "Silver";
+var chartNoncharFontColour = "Black";
+var chartNoncharBackColour = "Black";
+var chartFontColour = "Black";
+var chartBackColour = "White";
+var chartHighColour = "Yellow";
+var chartBlock = 0;
+var chartPage = 0;
+var chartChar = -1;
+var chartRow = 0;
+var chartCell = 0;
+var chartMode = "char";	// "char", "hex" or "dec"
+
+// BabelMap Online exit point
+function UnloadBabelMap()
+{
+	// Store current state
+	var fontformIndex = 0
+	if ( document.fontform.r1[1].checked )
+	{
+		fontformIndex = 1;
+	}
+	else if ( document.fontform.r1[2].checked )
+	{
+		fontformIndex = 2;
+	}
+
+	WriteCookie( "BabelMapFontSize", document.getElementById( "fontsize" ).selectedIndex, CookieDuration );
+	WriteCookie( "BabelMapFontColour", document.getElementById( "fontcolour" ).selectedIndex, CookieDuration );
+	WriteCookie( "BabelMapBackColour", document.getElementById( "backcolour" ).selectedIndex, CookieDuration );
+	WriteCookie( "BabelMapHighColour", document.getElementById( "highcolour" ).selectedIndex, CookieDuration );
+	WriteCookie( "BabelMapFontMapping", fontformIndex, CookieDuration );
+	WriteCookie( "BabelMapFontName", document.getElementById( "fonttext" ).value, CookieDuration );
+	WriteCookie( "BabelMapBlock", chartBlock, CookieDuration );
+	WriteCookie( "BabelMapPage", chartPage, CookieDuration );
+}
+
+// BabelMap Online entry point
+function LoadBabelMap()
+{
+	document.getElementById("searchtext").addEventListener("keyup", function(event) {
+		if (event.keyCode === 13) {
+			event.preventDefault();
+			document.getElementById("searchbutton").click();
+		}
+	});
+
+	document.getElementById("gototext").addEventListener("keyup", function(event) {
+		if (event.keyCode === 13) {
+			event.preventDefault();
+			document.getElementById("gotobutton").click();
+		}
+	});
+
+	// Get preferences if available
+	var defaultFontSizeIndex = 2;
+	var defaultFontColourIndex = 3;
+	var defaultBackColourIndex = 0;
+	var defaultHighColourIndex = 6;
+	var defaultFontMappingIndex = 0;
+	var defaultFontName = "";
+
+	var cookieFontSizeIndex = ReadCookie( "BabelMapFontSize" );
+	var cookieFontColourIndex = ReadCookie( "BabelMapFontColour" );
+	var cookieBackColourIndex = ReadCookie( "BabelMapBackColour" );
+	var cookieHighColourIndex = ReadCookie( "BabelMapHighColour" );
+	var cookieFontMappingIndex = ReadCookie( "BabelMapFontMapping" );
+	var cookieFontName = ReadCookie( "BabelMapFontName" );
+
+	if ( ( cookieFontSizeIndex != null ) && ( cookieFontSizeIndex >= 0 ) && ( cookieFontSizeIndex < 8 ) )
+	{
+		defaultFontSizeIndex = cookieFontSizeIndex;
+	}
+
+	if ( ( cookieFontColourIndex != null ) && ( cookieFontColourIndex >= 0 ) && ( cookieFontColourIndex < 16 ) )
+	{
+		defaultFontColourIndex = cookieFontColourIndex;
+	}
+
+	if ( ( cookieBackColourIndex != null ) && ( cookieBackColourIndex >= 0 ) && ( cookieBackColourIndex < 16 ) )
+	{
+		defaultBackColourIndex = cookieBackColourIndex;
+	}
+
+	if ( ( cookieHighColourIndex != null ) && ( cookieHighColourIndex >= 0 ) && ( cookieHighColourIndex < 16 ) )
+	{
+		defaultHighColourIndex = cookieHighColourIndex;
+	}
+
+	if ( ( cookieFontMappingIndex != null ) && ( cookieFontMappingIndex >= 0 ) && ( cookieFontMappingIndex < 3 ) )
+	{
+		defaultFontMappingIndex = cookieFontMappingIndex;
+	}
+
+	if ( cookieFontName != null )
+	{
+		defaultFontName = cookieFontName;
+	}
+
+	var blockBox = document.getElementById( "blocklist" );
+	var fontsizeBox = document.getElementById( "fontsize" );
+	var fontcolourBox = document.getElementById( "fontcolour" );
+	var backcolourBox = document.getElementById( "backcolour" );
+	var highcolourBox = document.getElementById( "highcolour" );
+
+	document.getElementById( "stats" ).innerHTML = "[Unicode version " + UnicodeMajorVersion + " (" + UnicodeMajorVersionDate + ") : " + ( ( NumChars / 1000 ) | 0 ) + "," + ( NumChars % 1000 ) + " characters in " + ( NumBlocks - PuaBlocks ) + " blocks covering " + NumScripts + " scripts]";
+	document.getElementById( "searchcheck" ).checked = false;
+	document.getElementById( "searchtext" ).value = "";
+	document.getElementById( "edittext" ).value = "";
+	document.getElementById( "gototext" ).value = "";
+	document.editform.r0[0].checked = true;
+	document.fontform.r1[defaultFontMappingIndex].checked = true;
+
+	if ( defaultFontName != "" )
+	{
+		document.getElementById( "fonttext" ).value =defaultFontName;
+	}
+
+	// Populate the Font Size dropdown box
+	AddOptionToDropdownBox( fontsizeBox, "12 points", "12pt", 0 );
+	AddOptionToDropdownBox( fontsizeBox, "16 points", "16pt", 1 );
+	AddOptionToDropdownBox( fontsizeBox, "20 points", "20pt", 2 );
+	AddOptionToDropdownBox( fontsizeBox, "24 points", "24pt", 3 );
+	AddOptionToDropdownBox( fontsizeBox, "36 points", "36pt", 4 );
+	AddOptionToDropdownBox( fontsizeBox, "48 points", "48pt", 5 );
+	AddOptionToDropdownBox( fontsizeBox, "60 points", "60pt", 6 );
+	AddOptionToDropdownBox( fontsizeBox, "72 points", "72pt", 7 );
+	fontsizeBox.options[defaultFontSizeIndex].selected = true;
+
+	// Populate the Font Colour dropdown box
+	AddOptionToDropdownBox( fontcolourBox, "White", "White", 0 );
+	AddOptionToDropdownBox( fontcolourBox, "Silver", "Silver", 1 );
+	AddOptionToDropdownBox( fontcolourBox, "Gray", "Gray", 2 );
+	AddOptionToDropdownBox( fontcolourBox, "Black", "Black", 3 );
+	AddOptionToDropdownBox( fontcolourBox, "Red", "Red", 4 );
+	AddOptionToDropdownBox( fontcolourBox, "Maroon", "Maroon", 5 );
+	AddOptionToDropdownBox( fontcolourBox, "Yellow", "Yellow", 6 );
+	AddOptionToDropdownBox( fontcolourBox, "Olive", "Olive", 7 );
+	AddOptionToDropdownBox( fontcolourBox, "Lime", "Lime", 8 );
+	AddOptionToDropdownBox( fontcolourBox, "Green", "Green", 9 );
+	AddOptionToDropdownBox( fontcolourBox, "Aqua", "Aqua", 10 );
+	AddOptionToDropdownBox( fontcolourBox, "Teal", "Teal", 11 );
+	AddOptionToDropdownBox( fontcolourBox, "Blue", "Blue", 12 );
+	AddOptionToDropdownBox( fontcolourBox, "Navy", "Navy", 13 );
+	AddOptionToDropdownBox( fontcolourBox, "Fuchsia", "Fuchsia", 14 );
+	AddOptionToDropdownBox( fontcolourBox, "Purple", "Purple", 15 );
+	fontcolourBox.options[defaultFontColourIndex].selected = true;
+
+	// Populate the Background Colour dropdown box
+	AddOptionToDropdownBox( backcolourBox, "White", "White", 0 );
+	AddOptionToDropdownBox( backcolourBox, "Silver", "Silver", 1 );
+	AddOptionToDropdownBox( backcolourBox, "Gray", "Gray", 2 );
+	AddOptionToDropdownBox( backcolourBox, "Black", "Black", 3 );
+	AddOptionToDropdownBox( backcolourBox, "Red", "Red", 4 );
+	AddOptionToDropdownBox( backcolourBox, "Maroon", "Maroon", 5 );
+	AddOptionToDropdownBox( backcolourBox, "Yellow", "Yellow", 6 );
+	AddOptionToDropdownBox( backcolourBox, "Olive", "Olive", 7 );
+	AddOptionToDropdownBox( backcolourBox, "Lime", "Lime", 8 );
+	AddOptionToDropdownBox( backcolourBox, "Green", "Green", 9 );
+	AddOptionToDropdownBox( backcolourBox, "Aqua", "Aqua", 10 );
+	AddOptionToDropdownBox( backcolourBox, "Teal", "Teal", 11 );
+	AddOptionToDropdownBox( backcolourBox, "Blue", "Blue", 12 );
+	AddOptionToDropdownBox( backcolourBox, "Navy", "Navy", 13 );
+	AddOptionToDropdownBox( backcolourBox, "Fuchsia", "Fuchsia", 14 );
+	AddOptionToDropdownBox( backcolourBox, "Purple", "Purple", 15 );
+	backcolourBox.options[defaultBackColourIndex].selected = true;
+
+	// Populate the Highlight Colour dropdown box
+	AddOptionToDropdownBox( highcolourBox, "White", "White", 0 );
+	AddOptionToDropdownBox( highcolourBox, "Silver", "Silver", 1 );
+	AddOptionToDropdownBox( highcolourBox, "Gray", "Gray", 2 );
+	AddOptionToDropdownBox( highcolourBox, "Black", "Black", 3 );
+	AddOptionToDropdownBox( highcolourBox, "Red", "Red", 4 );
+	AddOptionToDropdownBox( highcolourBox, "Maroon", "Maroon", 5 );
+	AddOptionToDropdownBox( highcolourBox, "Yellow", "Yellow", 6 );
+	AddOptionToDropdownBox( highcolourBox, "Olive", "Olive", 7 );
+	AddOptionToDropdownBox( highcolourBox, "Lime", "Lime", 8 );
+	AddOptionToDropdownBox( highcolourBox, "Green", "Green", 9 );
+	AddOptionToDropdownBox( highcolourBox, "Aqua", "Aqua", 10 );
+	AddOptionToDropdownBox( highcolourBox, "Teal", "Teal", 11 );
+	AddOptionToDropdownBox( highcolourBox, "Blue", "Blue", 12 );
+	AddOptionToDropdownBox( highcolourBox, "Navy", "Navy", 13 );
+	AddOptionToDropdownBox( highcolourBox, "Fuchsia", "Fuchsia", 14 );
+	AddOptionToDropdownBox( highcolourBox, "Purple", "Purple", 15 );
+	highcolourBox.options[defaultHighColourIndex].selected = true;
+
+	for ( ublock = 0; ublock < NumBlocks; ublock++ )
+	{
+		var index = SortedBlockIndex[ublock];
+		var optn = document.createElement( "option" );
+		optn.text = BlockName[index];
+		optn.value = index;
+		if ( ublock == 0 )
+		{
+			blockBox.options[0].text = BlockName[index];
+			blockBox.options[0].value = index;
+		}
+		else
+		{
+			blockBox.options.add( optn );
+		}
+	}
+
+	chartBlock = -1;
+
+	ProcessBabelMapParams();
+
+	if ( chartBlock == -1 )
+	{
+		var defaultBlockIndex = 0;
+		var defaultPageIndex = 0;
+		var cookieBlockIndex = ReadCookie( "BabelMapBlock" );
+		var cookiePageIndex = ReadCookie( "BabelMapPage" );
+
+		if ( ( cookieBlockIndex != null ) && ( cookieBlockIndex >= 0 ) && ( cookieBlockIndex < NumBlocks ) )
+		{
+			defaultBlockIndex = cookieBlockIndex;
+		}
+
+		if ( ( cookiePageIndex != null ) && ( cookiePageIndex >= 0 ) )
+		{
+			defaultPageIndex = cookiePageIndex;
+		}
+
+		chartBlock = defaultBlockIndex;
+		chartPage = defaultPageIndex;
+
+		WriteChart( chartBlock );
+	}
+}
+
+// https://www.babelstone.co.uk/Unicode/babelmap.html
+// https://www.babelstone.co.uk/Unicode/babelmap.html?block=Block Name
+// https://www.babelstone.co.uk/Unicode/babelmap.html?char=1234
+// https://www.babelstone.co.uk/Unicode/babelmap.html?name=Character Name
+// https://www.babelstone.co.uk/Unicode/babelmap.html?find=string
+// 
+function ProcessBabelMapParams()
+{
+	if ( location.search )
+	{
+		var params = location.search.substring(1).split( "&" );
+		var a = params[0].split( "=" );
+		var param = a[0].toLowerCase();
+		var value = unescape( a[1] );
+
+		if ( param == "block" )
+		{
+			value = value.toLowerCase();
+			for ( b = 0; b < NumBlocks; b++ )
+			{
+				if ( BlockName[b].toLowerCase() == value )
+				{
+					WriteChart( b );
+					break;
+				}
+			}
+		}
+		else if ( param == "char" )
+		{
+			document.getElementById( "gototext" ).value = value;
+			OnGotoCharacter();
+		}
+		else if ( param == "find" )
+		{
+			document.getElementById( "searchtext" ).value = value;
+			OnSearchCharacter();
+		}
+		else if ( param == "name" )
+		{
+			document.getElementById( "searchcheck" ).checked = true;
+			document.getElementById( "searchtext" ).value = value;
+			OnSearchCharacter();
+		}
+	}
+}
+
+function OnNewBlock()
+{
+	var blockBox = document.getElementById( "blocklist" );
+	var newBlock = blockBox.options[blockBox.selectedIndex].value;
+	chartPage = 0;
+	chartChar = -1;
+	WriteChart( newBlock );
+}
+
+function OnFirstBlock()
+{
+	newBlock = 0;
+	chartPage = 0;
+	chartChar = -1;
+	WriteChart( newBlock );
+}
+
+function OnNextBlock()
+{
+	var blockBox = document.getElementById( "blocklist" );
+	var newBlock = blockBox.options[blockBox.selectedIndex].value;
+	newBlock++;
+	chartPage = 0;
+	chartChar = -1;
+	WriteChart( newBlock );
+}
+
+function OnPreviousBlock()
+{
+	var blockBox = document.getElementById( "blocklist" );
+	var newBlock = blockBox.options[blockBox.selectedIndex].value;
+	newBlock--;
+	chartPage = 0;
+	chartChar = -1;
+	WriteChart( newBlock );
+}
+
+function OnNextPage()
+{
+	chartPage++;
+	chartChar = -1;
+	WriteChart( chartBlock );
+}
+
+function OnPreviousPage()
+{
+	chartPage--;
+	chartChar = -1;
+	WriteChart( chartBlock );
+}
+
+function OnRefreshFont()
+{
+	WriteChart( chartBlock );
+}
+
+function OnRefreshColour()
+{
+	WriteChart( chartBlock );
+}
+
+function OnSearchCharacter()
+{
+	var found = OnFindCharacter();
+
+	if ( found == true )
+	{
+		chartChar = searchChar;
+		chartPage = GetChartPage( searchBlock, searchChar );
+		WriteChart( searchBlock );
+	}
+}
+
+function OnGotoCharacter()
+{
+	var found = false;
+	var ublock = 0;
+	var char = 0;
+
+	var cp = document.getElementById( "gototext" ).value;
+
+	if ( cp != "" )
+	{
+		// Strip off any U+ prefix
+		if ( cp.indexOf( "U+" ) == 0 )
+		{
+			cp = cp.substr( 2, ( cp.length - 2 ) );
+		}
+
+		// Convert the user-input hex string to an integer and back to hex
+		char = HexToInt( cp );
+
+		if ( ( char.toString() == "NaN" ) || ( char < 0 ) || ( char > LastValidCodePoint ) )
+		{
+			alert( "Please enter a valid hexadecimal code point between 0000 and 10FFFF" );
+		}
+		else
+		{
+			cp = ToHex( char );
+
+			if ( IsHighSurrogate( char ) )
+			{
+				alert( "U+" + cp + " is a high surrogate code point" );
+			}
+			else if ( IsLowSurrogate( char ) )
+			{
+				alert( "U+" + cp + " is a low surrogate code point" );
+			}
+			else if ( IsControlCharacter( char ) )
+			{
+				if ( char < 128 )
+				{
+					ublock = 0;
+				}
+				else
+				{
+					ublock = 1;
+				} 
+				found = true;
+			}
+			else	// It is a graphic, format, PUA or reserved character
+			{
+				ublock = GetBlockForCharacter( char );
+
+				if ( ublock == -1 )
+				{
+					alert( "U+" + cp + " is a reserved character in an unassigned region" );
+				}
+				else
+				{
+					found = true;
+				}
+			}
+		}
+	}
+
+	if ( found == true )
+	{
+		chartChar = char;
+		chartPage = GetChartPage( ublock, char );
+		WriteChart( ublock );
+	}
+}
+
+function OnSelectCharacter( row, cell )
+{
+	if ( chartChar != -1 )
+	{
+		oldchar = chartChar;
+		chartChar = -1;
+		DisplayChartCharacter( chartRow, chartCell, chartBlock, oldchar );
+	}
+
+	chartChar = GetBlockStart( chartBlock );
+	if ( chartPage > 0 )
+	{
+		chartChar += ( ( chartPage -1 ) * CharsPerPage );
+	}
+	chartChar += ( ( row - 1 ) * CharsPerRow );
+	chartChar += ( cell - 1 );
+	DisplayChartCharacter( row, cell, chartBlock, chartChar );
+	AddToTextBox( chartChar );
+}
+
+function AddToTextBox( char )
+{
+	var editBox = document.getElementById( "edittext" );
+	var contents = editBox.value;
+
+	if ( chartMode == "hex" )
+	{
+		var ref = "&#x" + ToHex( char ) + ";";
+		contents += ref;
+	}
+	else if ( chartMode == "dec" )
+	{
+		var ref = "&#" + char + ";";
+		contents += ref;
+	}
+	else // if ( chartMode == "char" )
+	{
+		if ( char < CharactersPerPlane )
+		{
+			// Replace any unpaired surrogates
+			if ( ( char >= HighSurrogateFirst ) && ( char <= LowSurrogateLast ) )
+			{
+				char = ReplacementCharacter;
+			}
+
+			// Do not add control characters to the edit buffer
+			if ( ! IsControlCharacter( char ) )
+			{
+				contents += String.fromCharCode( char );
+			}
+		}
+		else
+		{
+			// If in Planes 1-16 convert to surrogates otherwise replace
+			if ( char <= LastValidCodePoint )
+			{
+				var a = ToSurrogates( char );
+				var hi = a[0];
+				var lo = a[1];
+				contents += String.fromCharCode( hi, lo );
+			}
+			else
+			{
+				contents += String.fromCharCode( ReplacementCharacter );
+			}
+		}
+	}
+
+	editBox.value = contents;
+}
+
+function OnClearEditBox()
+{
+	var editBox = document.getElementById( "edittext" );
+	editBox.value = "";
+}
+
+function OnCopyEditBox()
+{
+	var editBox = document.getElementById( "edittext" );
+	editBox.select();
+	document.execCommand('copy');
+}
+
+function OnChartMode( newChartMode )
+{
+	if ( newChartMode != chartMode )
+	{
+		var editBox = document.getElementById( "edittext" );
+
+		if ( editBox.value.length > 0 )
+		{
+			var contents = editBox.value;
+
+			if ( newChartMode == "char" )
+			{
+				editBox.value = FromCharacterRefs( contents );
+			}
+			else
+			{
+				// Normalise to Unicode characters (char mode may have manually entered refs)
+				contents = FromCharacterRefs( contents );
+				editBox.value = ToCharacterRefs( contents, ( newChartMode == "hex" ) );
+			}
+		}
+		
+		chartMode = newChartMode;
+	}
+}
+
+function WriteChart( ublock )
+{
+	var blockBox = document.getElementById( "blocklist" );
+	if ( blockBox.options[blockBox.selectedIndex].value != ublock )
+	{
+		var sortIndex = SortIndexForBlock( ublock );
+		blockBox.options[sortIndex].selected = true;
+	}
+
+	if ( ublock == 0 )
+	{
+		document.getElementById( "prevblockbutton" ).setAttribute( "disabled", true );
+	}
+	else
+	{
+		document.getElementById( "prevblockbutton" ).removeAttribute( "disabled" );
+	}
+
+	if ( ublock == LastBlock )
+	{
+		document.getElementById( "nextblockbutton" ).setAttribute( "disabled", true );
+	}
+	else
+	{
+		document.getElementById( "nextblockbutton" ).removeAttribute( "disabled" );
+	}
+
+	var start = GetBlockStart( ublock );
+	var startcode = ToHex( start );
+
+	var end = parseInt( BlockEnd[ublock], 16 );
+	end++;
+	var codepoints = ( end - start );
+	var rows = ( codepoints / CharsPerRow );
+
+	if ( rows > MaxRowsPerChart )
+	{
+		document.getElementById( "prevpagebutton" ).style.display = "";
+		document.getElementById( "nextpagebutton" ).style.display = "";
+
+		if ( chartPage == 0 )
+		{
+			chartPage = 1;
+			document.getElementById( "prevpagebutton" ).setAttribute( "disabled", true );
+		}
+		else
+		{
+			document.getElementById( "prevpagebutton" ).removeAttribute( "disabled" );
+		}
+
+		start += ( CharsPerPage * ( chartPage - 1 ) );
+
+		var newEnd = ( start + CharsPerPage );
+
+		if ( newEnd < end )
+		{
+			end = newEnd;
+			document.getElementById( "nextpagebutton" ).removeAttribute( "disabled" );
+		}
+		else
+		{
+			document.getElementById( "nextpagebutton" ).setAttribute( "disabled", true );
+		}
+
+		codepoints = ( end - start );
+		rows = ( codepoints / CharsPerRow );
+	}
+	else
+	{
+		chartPage = 0;
+		document.getElementById( "prevpagebutton" ).setAttribute( "disabled", true );
+		document.getElementById( "nextpagebutton" ).setAttribute( "disabled", true );
+		document.getElementById( "prevpagebutton" ).style.display = "none";
+		document.getElementById( "nextpagebutton" ).style.display = "none";
+	}
+
+	var char = start;
+
+	var hrefstart = "";
+	var hrefend = "";
+
+	if ( BlockName[ublock].indexOf( "Private Use Area" ) == -1 )
+	{
+		hrefstart = "<a target='_blank' href='" + ChartsUrl + startcode + ".pdf' title='Unicode Code Chart (PDF)'>";
+		hrefend = "</a>"
+	}
+
+	var count = BlockCount[ublock];
+
+	if ( count == 0 )		// PUA
+	{
+		if ( ublock == PrivateUseArea_Block )
+		{
+			count = PuaChars;
+		}
+		else
+		{
+			count = SupplementaryPuaChars;
+		}
+	}
+
+	chartFontName = "";
+
+	if ( document.fontform.r1[1].checked )
+	{
+		chartFontName = BlockFonts[ublock];
+	}
+	else if ( document.fontform.r1[2].checked )
+	{
+		chartFontName = document.getElementById( "fonttext" ).value;
+	}
+
+	document.getElementById( "edittext" ).style.fontFamily = chartFontName;
+
+	var fontsizeBox = document.getElementById( "fontsize" );
+	chartFontSize = fontsizeBox.options[fontsizeBox.selectedIndex].value;
+
+	var fontcolourBox = document.getElementById( "fontcolour" );
+	chartFontColour = fontcolourBox.options[fontcolourBox.selectedIndex].value;
+
+	var backcolourBox = document.getElementById( "backcolour" );
+	chartBackColour = backcolourBox.options[backcolourBox.selectedIndex].value;
+
+	var highcolourBox = document.getElementById( "highcolour" );
+	chartHighColour = highcolourBox.options[highcolourBox.selectedIndex].value;
+
+	var plural = ( count == 1 ? "" : "s" );
+	var plane = ( ( start / 65535 ) | 0 );
+	var planetitle = "<b>" + PlaneName[plane] + "</b>";
+	var blocktitle = "<b>Block " + ublock + " : " + hrefstart + BlockName[ublock] + hrefend + " [" + startcode + ".." + BlockEnd[ublock] + "] (" + count + " character" + plural + ")</b>";
+	document.getElementById( "planetitle" ).innerHTML = planetitle;
+	document.getElementById( "blocktitle" ).innerHTML = blocktitle;
+	document.getElementById( "chartitle" ).innerHTML = "&nbsp;";
+	document.getElementById( "charnotes" ).innerHTML = "&nbsp;";
+
+	for ( r = 1; r <= MaxRowsPerChart; r++ )
+	{
+		var tr = "R" + r ;
+
+		if ( r <= rows )
+		{
+			var th = "R" + r + "C0";
+			var hex = ToHex( char );
+			var rowhdr = hex.slice( 0, -1 ) + "x";
+			document.getElementById( th ).innerHTML = rowhdr;
+
+			for ( c = 1; c <= CharsPerRow; c++ )
+			{
+				DisplayChartCharacter( r, c, ublock, char );
+				char++;
+			}
+
+			document.getElementById( tr ).style.display = "";
+		}
+		else
+		{
+			document.getElementById( tr ).style.display = "none";
+		}
+	}
+
+	chartBlock = ublock;
+}
+
+function DisplayChartCharacter( row, cell, ublock, char )
+{
+	var td = "R" + row + "C" + cell;
+	var title = GetFullCharacterName( ublock, char, true, true );
+	var cp = "&#x" + ToHex( char ) + ";";
+	if ( char == 0 )
+	{
+		cp = "&nbsp;";	// No Break Space
+	}
+
+	var selected = false;
+	var fontcolour = chartFontColour;
+	var backcolour = chartBackColour;
+
+	if ( ( chartChar != -1 ) && ( char == chartChar ) )
+	{
+		chartRow = row;
+		chartCell = cell;
+		title = title.replace( "<", "&lt;" );
+		title = title.replace( ">", "&gt;" );
+		var chartitle = "<b>" + title + "</b>";
+		document.getElementById( "chartitle" ).innerHTML = chartitle;
+		var charnotes = GetCharacterNotes( ublock, char );
+		if ( charnotes.length == 0 )
+		{
+			charnotes = "&nbsp;";
+		}
+		document.getElementById( "charnotes" ).innerHTML = charnotes;
+		fontcolour = chartFontColour;
+		backcolour = chartHighColour;
+		selected = true;
+	}
+
+	if ( title.indexOf( "<" ) != -1 )
+	{
+		if ( IsControlCharacter( char ) )
+		{
+			fontcolour = chartControlFontColour;
+			backcolour = chartControlBackColour;
+		}
+		else if ( IsNonCharacter( char ) )
+		{
+			fontcolour = chartNoncharFontColour;
+			backcolour = chartNoncharBackColour;
+		}
+		else if ( IsPrivateUseCharacter( char ) )
+		{
+		}
+		else
+		{
+			fontcolour = chartReservedFontColour;
+			backcolour = chartReservedBackColour;
+		}
+
+		if ( selected )
+		{
+			backcolour = chartHighColour;
+		}
+	}
+
+	var el = document.getElementById( td );
+	el.style.textAlign = "center";
+	el.style.verticalAlign = "middle";
+	el.style.fontFamily = chartFontName;
+	el.style.fontSize = chartFontSize;
+	el.style.color = fontcolour;
+	el.style.backgroundColor = backcolour;
+	el.title = title;
+	el.innerHTML = cp;
+}
+
+function SortIndexForBlock( block )
+{
+	for ( var i = 0; i < NumBlocks; i++ )
+	{
+		if ( SortedBlockIndex[i] == block )
+		{
+			return i;
+		}
+	}
+
+	return 0;
+}
+
+function GetBlockStart( ublock )
+{
+	var start = parseInt( BlockStart[ublock], 16 );
+	if ( ublock < 2 )
+	{
+		start -= 32;
+	}
+	return start;
+}
+
+function GetCodepoints( ublock )
+{
+	var start = GetBlockStart( ublock );
+	var startcode = ToHex( start );
+	var end = parseInt( BlockEnd[ublock], 16 );
+	end++;
+	return ( end - start );
+}
+
+function GetChartPage( ublock, char )
+{
+	var page = 0;
+
+	var codepoints = GetCodepoints( ublock );
+
+	if ( codepoints > CharsPerChart )
+	{
+		var start = GetBlockStart( ublock );
+		var offset = ( ( char - start ) + 1 );
+
+		if ( offset > CharsPerPage )
+		{
+			page = ( ( offset / CharsPerPage ) | 0 );
+			if ( ( offset % CharsPerPage ) != 0 )
+			{
+				page++;
+			}
+		}
+	}
+
+	return page;
+}
+
+function ToCharacterNames( input, isPrefixCode, isAppendNotes )
+{
+	var output = "";
+	var hi = 0;
+
+	for ( var i = 0; i < input.length; i++ )
+	{
+		var char = input.charCodeAt( i );
+		var name = "";
+
+		if ( ( char >= HighSurrogateFirst ) && ( char <= HighSurrogateLast ) )
+		{
+			var newchar = char;
+			char = 0;
+
+			if ( hi != 0 )
+			{
+				char = hi;
+			}
+			hi = newchar;
+		}
+		else if ( ( char >= LowSurrogateFirst ) && ( char <= LowSurrogateLast ) )
+		{
+			if ( hi != 0 )
+			{
+				char = FromSurrogates( hi, char );
+				hi = 0;
+			}
+		}
+		else
+		{
+			if ( hi != 0 )
+			{
+				name = GetNameForCharacter( char, isPrefixCode, isAppendNotes );
+				output += name;
+				output += "\n";
+			}
+		}
+
+		if ( char != 0 )
+		{
+			name = GetNameForCharacter( char, isPrefixCode, isAppendNotes );
+			output += name;
+			output += "\n";
+		}
+	}
+
+	return output;
+}
+
+function ToCharacterRefs( input, isHex )
+{
+	var output = "";
+	var hi = 0;
+
+	for ( var i = 0; i < input.length; i++ )
+	{
+		var char = input.charCodeAt( i );
+
+		if ( ( char >= HighSurrogateFirst ) && ( char <= HighSurrogateLast ) )
+		{
+			var newchar = char;
+			if ( hi == 0 )
+			{
+				char = 0;
+			}
+			else
+			{
+				char = ReplacementCharacter;
+			}
+			hi = newchar;
+		}
+		else if ( ( char >= LowSurrogateFirst ) && ( char <= LowSurrogateLast ) )
+		{
+			if ( hi == 0 )
+			{
+				char = ReplacementCharacter;
+			}
+			else
+			{
+				char = FromSurrogates( hi, char );
+				hi = 0;
+			}
+		}
+		else
+		{
+			if ( hi != 0 )
+			{
+				var ref = "";
+				if ( isHex )
+				{
+					ref = "&#x" + ToHex( ReplacementCharacter ) + ";";
+				}
+				else
+				{
+					ref = "&#" + ReplacementCharacter + ";";
+				}
+				output += ref;
+				hi = 0;
+			}
+
+			if ( char > LastValidCodePoint )
+			{
+				char = ReplacementCharacter;
+			}
+		}
+
+		if ( char != 0 )
+		{
+			var ref = "";
+			if ( isHex )
+			{
+				ref = "&#x" + ToHex( char ) + ";";
+			}
+			else
+			{
+				ref = "&#" + char + ";";
+			}
+			output += ref;
+		}
+	}
+
+	return output;
+}
+
+function FromCharacterRefs( input )
+{
+	var output = "";
+	var state = "waiting";
+	var pending = "";
+	var value = 0;
+	var invalid = false;
+
+	for ( var i = 0; i < input.length; i++ )
+	{
+		var uchar = input.charAt( i );
+
+		if ( uchar == ";" )
+		{
+			pending += uchar;
+
+			if ( ( state == "hexncr" ) || ( state == "decncr" ) )
+			{
+				if ( ( value > 0 ) && ( value <= LastValidCodePoint  ) )
+				{
+					pending = "";
+				}
+				else
+				{
+					value = 0;
+				}
+			}
+			else if ( state == "htmlref" )
+			{
+				for ( j = 0; j < NumHtmlEntities; j++ )
+				{
+					if ( HtmlEntities[j] == pending )
+					{
+						value = HtmlEntityMapping[j];
+						pending = "";
+						break;
+					}
+				}
+			}
+
+			for ( p = 0; p < pending.length; p++ )
+			{
+				output += pending.charAt( p );
+			}
+			pending = "";
+
+			if ( value != 0 )
+			{
+				if ( value > CharactersPerPlane )
+				{
+					var a = ToSurrogates( value );
+					var hi = a[0];
+					var lo = a[1];
+					output += String.fromCharCode( hi, lo );
+				}
+				else
+				{
+					output += String.fromCharCode( value );
+				}
+				value = 0;
+			}
+
+			state = "waiting";
+		}
+		else if ( uchar == "&" )
+		{
+			for ( p = 0; p < pending.length; p++ )
+			{
+				output += pending.charAt( p );
+			}
+			pending = uchar;
+			value = 0;
+			state = "ampersand";
+		}
+		else
+		{
+			if ( state == "ampersand" )
+			{
+				pending += uchar;
+
+				if ( uchar == "#" )
+				{
+					state = "hash";
+				}
+				else if ( IsAlphanumeric( uchar ) )
+				{
+					state = "htmlref";
+				}
+				else
+				{
+					invalid = true;
+				}
+			}
+			else if ( state == "hash" )
+			{
+				pending += uchar;
+
+				if ( uchar == "x" )
+				{
+					state = "hexncr";
+					value = 0;
+				}
+				else if ( IsDigit( uchar ) )
+				{
+					state = "decncr";
+					value = ( uchar - "0" );
+				}
+				else
+				{
+					invalid = true;
+				}
+			}
+			else if ( state == "htmlref" )
+			{
+				pending += uchar;
+
+				if ( ! IsAlphanumeric( uchar ) )
+				{
+					invalid = true;
+				}
+			}
+			else if ( state == "hexncr" )
+			{
+				pending += uchar;
+
+				if ( IsHexDigit( uchar ) )
+				{
+					value <<= 4;
+					value += parseInt( uchar, 16 );
+
+					if ( value > LastValidCodePoint )
+					{
+						invalid = true;
+					}
+				}
+				else
+				{
+					invalid = true;
+				}
+			}
+			else if ( state == "decncr" )
+			{
+				pending += uchar;
+
+				if ( IsDigit( uchar ) )
+				{
+					value *= 10;
+					value += ( uchar - "0" );
+
+					if ( value > LastValidCodePoint )
+					{
+						invalid = true;
+					}
+				}
+				else
+				{
+					invalid = true;
+				}
+			}
+			else
+			{
+				output += uchar;
+			}
+
+			if ( invalid == true )
+			{
+				for ( p = 0; p < pending.length; p++ )
+				{
+					output += pending.charAt( p );
+				}
+				pending = "";
+				invalid = false;
+				state = "waiting";
+			}
+		}
+	}
+
+	for ( p = 0; p < pending.length; p++ )
+	{
+		output += pending.charAt( p );
+	}
+
+	return output;
+}
+
+function ToSurrogates( char )
+{
+	var hi = char;
+	var lo = 0;
+
+	if ( char > CharactersPerPlane )
+	{
+		char -= CharactersPerPlane;
+		hi = ( HighSurrogateFirst | ( ( char >>> HalfShift ) & HalfMask ) );
+		lo = ( LowSurrogateFirst | ( char & HalfMask ) );
+	}
+
+	return [hi,lo];
+}
+
+function FromSurrogates( hi, lo )
+{
+	var char = ReplacementCharacter;
+	if ( ( ( hi >= HighSurrogateFirst ) && ( hi <= HighSurrogateLast ) ) && ( ( lo >= LowSurrogateFirst ) && ( lo <= LowSurrogateLast ) ) )
+	{
+		char = ( ( ( hi - HighSurrogateFirst ) << HalfShift ) + ( lo - LowSurrogateFirst ) + HalfBase );
+	}
+
+	return char;
+}
+
+function IsAlphanumeric( uchar )
+{
+	if ( ( uchar >= "A" ) && ( uchar <= "Z" ) )
+	{
+		return true;
+	}
+
+	if ( ( uchar >= "a" ) && ( uchar <= "z" ) )
+	{
+		return true;
+	}
+
+	if ( ( uchar >= "0" ) && ( uchar <= "9" ) )
+	{
+		return true;
+	}
+
+	return false;
+}
+
+function IsHexDigit( uchar )
+{
+	if ( ( uchar >= "A" ) && ( uchar <= "F" ) )
+	{
+		return true;
+	}
+
+	if ( ( uchar >= "a" ) && ( uchar <= "f" ) )
+	{
+		return true;
+	}
+
+	if ( ( uchar >= "0" ) && ( uchar <= "9" ) )
+	{
+		return true;
+	}
+
+	return false;
+}
+
+function IsDigit( uchar )
+{
+	if ( ( uchar >= "0" ) && ( uchar <= "9" ) )
+	{
+		return true;
+	}
+
+	return false;
+}
+
+// Converts any NCR (hex or decimal) escape sequences in the input string
+function ConvertFromNCR( input )
+{
+	var output = input.replace(/&#x([0-9A-F]+);/gi,function(b)
+		{
+			return String.fromCodePoint(parseInt(b.slice(3),16))
+		});
+
+	output = output.replace(/&#([0-9]+);/g,function(b)
+		{
+			return String.fromCodePoint(parseInt(b.slice(2)))
+		});
+
+	return output;
+}
+
+// Converts a single UTF-8 character
+function ConvertFromUTF8( input )
+{
+	var output = "";
+	var length = GetUTF8Length( input );
+	var ch = 0;
+	var index = 0;
+
+	switch ( length )
+	{
+	case ( 4 ) :
+		ch += input.charCodeAt(index++);
+		ch <<= 6;
+		// Fall through
+
+	case ( 3 ) :
+		ch += input.charCodeAt(index++);
+		ch <<= 6;
+		// Fall through
+
+	case ( 2 ) :
+		ch += input.charCodeAt(index++);
+		ch <<= 6;
+		// Fall through
+
+	case ( 1 ) :
+		ch += input.charCodeAt(index++);
+		ch -= UTF8Offsets[index-1];
+		pos = 0;
+		break;
+
+	default :
+		return [0,""];
+	}
+
+	if ( ch > CharactersPerPlane )
+	{
+		ch -= CharactersPerPlane;
+		var hi = ( HighSurrogateFirst | ( ( ch >>> HalfShift ) & HalfMask ) );
+		var lo = ( LowSurrogateFirst | ( ch & HalfMask ) );
+		output = String.fromCharCode( hi, lo );
+	}
+	else
+	{
+		output = String.fromCharCode( ch );
+	}
+
+	return [length,output];
+}
+
+function GetUTF8Length( input )
+{
+	if ( input.charCodeAt( 0 ) <= 0x7F )
+	{
+		return 1;
+	}
+	else if ( input.charCodeAt( 0 ) <= 0xC1 )
+	{
+		return 0;
+	}
+	else if ( input.charCodeAt( 0 ) <= 0xDF )
+	{
+		if ( ( input.charCodeAt( 1 ) < 0x80 ) || ( input.charCodeAt( 1 ) > 0xBF ) )
+		{
+			return 0;
+		}
+		return 2;
+	}
+	else if ( input.charCodeAt( 0 ) <= 0xE0 )
+	{
+		if ( ( input.charCodeAt( 1 ) < 0xA0 ) || ( input.charCodeAt( 1 ) > 0xBF ) )
+		{
+			return 0;
+		}
+		return 3;
+	}
+	else if ( input.charCodeAt( 0 ) <= 0xEF )
+	{
+		if ( ( input.charCodeAt( 1 ) < 0x80 ) || ( input.charCodeAt( 1 ) > 0xBF ) )
+		{
+			return 0;
+		}
+		return 3;
+	}
+	else if ( input.charCodeAt( 0 ) <= 0xF0 )
+	{
+		if ( ( input.charCodeAt( 1 ) < 0x90 ) || ( input.charCodeAt( 1 ) > 0xBF ) )
+		{
+			return 0;
+		}
+		return 4;
+	}
+	else if ( input.charCodeAt( 0 ) <= 0xF3 )
+	{
+		if ( ( input.charCodeAt( 1 ) < 0x80 ) || ( input.charCodeAt( 1 ) > 0xBF ) )
+		{
+			return 0;
+		}
+		return 4;
+	}
+	else if ( input.charCodeAt( 0 ) <= 0xF4 )
+	{
+		if ( ( input.charCodeAt( 1 ) < 0x80 ) || ( input.charCodeAt( 1 ) > 0x8F ) )
+		{
+			return 0;
+		}
+		return 4;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+function AddOptionToDropdownBox( box, text, value, index )
+{
+	if ( index == 0 )
+	{
+		box.options[0].text = text;
+		box.options[0].value = value;
+	}
+	else
+	{
+		var optn = document.createElement( "option" );
+		optn.text = text;
+		optn.value = value;
+		box.options.add( optn );
+	}
+}
+// Cookie functions from <https://www.quirksmode.org/js/cookies.html>
+function WriteCookie( name, value, days )
+{
+	if ( days )
+	{
+		var date = new Date();
+		date.setTime( date.getTime() + ( days*24*60*60*1000 ) );
+		var expires = "; expires=" + date.toGMTString();
+	}
+	else
+	{
+		var expires = "";
+	}
+//	document.cookie = name + "=" + value + expires + "; path=/";
+}
+
+function ReadCookie( name )
+{
+	var nameEQ = name + "=";
+	var ca = document.cookie.split( ';' );
+
+	for ( var i=0; i < ca.length; i++ )
+	{
+		var c = ca[i];
+		while ( c.charAt(0)==' ' )
+		{
+			c = c.substring( 1, c.length );
+		}
+
+		if ( c.indexOf( nameEQ ) == 0 )
+		{
+			return c.substring( nameEQ.length, c.length );
+		}
+	}
+
+	return null;
+}
+
+function EraseCookie( name )
+{
+	createCookie( name, "", -1 );
 }
