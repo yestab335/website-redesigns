@@ -1,4 +1,156 @@
 *** DATE FORMAT: YYYY/MM/DD ***
+* v1.2.9 (2023-01-31)
+Add LaDepeche.fr
+Fix Barron's (remove cookies)
+Fix DeMorgen.be
+Fix WSJ (cookie-fix)
+
+* v1.2.8 (2023-01-31)
+Fix Financial Times
+Update (custom)options UI
+
+* v1.2.7 (2023-01-31)
+Add The Athletic UK
+Add Il Messaggero (Italy)
+Fix Corriere Della Sera
+Update version-check (replace innerHTML)
+
+* v1.2.6 (2023-01-31)
+Add Aftonbladet.se
+Fix Australian Community Media newspapers
+Fix Economist (inactive links)
+Fix Corriere Della Sera
+Fix custom sites (domains with capitals)
+Add link to releases (version check)
+Show badge-notification for regional Ad.nl sites
+Prepare release (limited permissions)
+Update custom sites UI (export/import)
+Update refresh tab after save options (Chrome-synch)
+
+* v1.2.5 (2023-01-31)
+Fix Lc.nl & DvhN.nl (newsletter)
+Fix Repubblica.it
+Show badge-notification if active on tab
+Update custom sites UI (delete site)
+
+* v1.2.4 (2023-01-31)
+Add The Port Macquarie News (Australia)
+Remove nknews.org (fix obsolete)
+
+* v1.2.3 (2023-01-31)
+Add Humo.be
+Add Seeking Alpha
+Add option for custom sites
+Fix The New Yorker paywall-banner
+Fix LesEchos.fr (hide ads instead of removing)
+Fix Bloomberg paywall-script
+Include sites from local js-file (maintenance)
+Update Options - new release check
+
+* v1.2.2 (2023-01-31)
+Add Australian Community Media (daily)
+Add Clarin (Argentina)
+Add WAtoday (Australia)
+Fix TheNation paywall-script block
+Refresh tab after saved options
+Fix Leeuwarder Courant
+Fix Corriere Della Sera
+
+* v1.2.1 (2023-01-31)
+Add CommonWealth Magazine Taiwan
+Add El Mercurio (Chile)
+Add Leeuwarder Courant & Dagblad van het Noorden (Netherlands)
+
+* v1.2.0 (2023-01-31)
+Add Fd.nl (Googlebot)
+Add Spectator.com.au & TheCourier.com.au
+Fix Espresso.repubblica.it
+Fix TheAdvocate.com.au
+
+* v1.1.9 (2023-01-31)
+Add Harvard Business Review Taiwan
+Add Modern Healthcare
+Add National Review
+Add The Christian Science Monitor
+Add The Daily Beast
+Add World Politics Review
+Fix Townsville Bulletin (url)
+Fix Wall Street Journal (blogs)
+
+* v1.1.8 (2023-01-31)
+Synch sites with chrome extension (adding 31 sites and removing 3 obsolete ones)
+Fix London Review of Books (allow cookies)
+
+* v1.1.7 (2023-01-31)
+Fix json-bug at install/options (when not saving options)
+
+* v1.1.6 (2023-01-31)
+Load sites from json
+Block general paywall scripts (like TinyPass/Piano)
+
+* v1.1.5 (2023-01-31)
+Add sites on Medium platform (remove cookies)
+Fix The New Statesman (version US/UK)
+Remove The Athletic trial-banners
+
+* v1.1.4 (2023-01-31)
+Add Lecho.be
+Add LesEchos.fr
+Add Scribd (unblur text of documents)
+Add Tech in Asia
+Add The Athletic
+Fix Australian Financial Review (enable Javascript/photos)
+Fix Caixin Global
+Fix LeParisien.fr (block TinyPass paywall)
+Fix LesEchos.fr (block TinyPass)
+Fix Economist (Javascript/cookies)
+Fix Handelsblatt (Googlebot)
+Fix MIT Tech Review
+Fix Newcastle Herald (+ new domain)
+Fix NYTimes (layout)
+Fix The Globe and Mail
+Fix Toronto Star (enable Javascript)
+Fix banners on TheTimes.co.uk, Bloomberg, Asia Nikkei, Haaretz.com & Hbr.org
+Fix Statistica & Bloomberg Quint (manifest)
+
+* v1.1.3 (2023-01-31)
+Add ET Prime
+Add Harper's Magazine
+Add LeParisien.fr
+Add London Review of Books
+Add NkNews.org
+Add Philadelphia Inquirer
+Add Times Literary Supplement
+Fix Boston Globe (fix for blocking scripts while site restrictions)
+Fix Economist (new option to block external scripts)
+Fix ET Prime restrictions (now with regular expressions)
+Fix ET Prime (bug in isSiteEnabled)
+Fix Foreign Policy (block paywall-script)
+Fix Quartz (gdpr)
+Fix Spectator.co.uk (block paywall-script)
+Fix WSJ (cookie-fix for reformatting & restriction to only articles)
+
+* v1.1.2 (2023-01-31)
+Add DeMorgen.be
+Add Scientific American (only free articles)
+Add TheHindu
+Fix Ad.nl/Ed.nl (cookie)
+Fix Bloomberg (bot-alert)
+Fix Caixin Global
+Fix Le Monde support
+Fix NYTimes (subscription form)
+Fix Quora (read more)
+Fix Telegraaf.nl (timing issue)
+Fix The Atlantic (cookie)
+
+* v1.1.0 (2023-01-31)
+Add Dutch papers: ad.nl, ed.nl, parool.nl, trouw.nl, telegraaf.nl
+Add Dutch magazines: groene.nl, vn.nl
+Add Le Monde
+Fix Quartz
+Fix WaPo (gdpr-banner)
+Fix WSJ (Googlebot; mod=rsswn obsolete)
+
 * v1.0.1 (2022-01-26)
 Refactored code
 
